@@ -11418,7 +11418,7 @@
 
 // <o> NRF_SDH_BLE_CENTRAL_LINK_COUNT - Maximum number of central links. 
 #ifndef NRF_SDH_BLE_CENTRAL_LINK_COUNT
-#define NRF_SDH_BLE_CENTRAL_LINK_COUNT 4
+#define NRF_SDH_BLE_CENTRAL_LINK_COUNT 2
 #endif
 
 // <o> NRF_SDH_BLE_TOTAL_LINK_COUNT - Total link count. 
@@ -11626,6 +11626,13 @@
 
 #ifndef BLE_LBS_C_BLE_OBSERVER_PRIO
 #define BLE_LBS_C_BLE_OBSERVER_PRIO 2
+#endif
+
+// <o> BLE_THINGY_UIS_C_BLE_OBSERVER_PRIO  
+// <i> Priority with which BLE events are dispatched to the LED Button Service Client.
+
+#ifndef BLE_THINGY_UIS_C_BLE_OBSERVER_PRIO
+#define BLE_THINGY_UIS_C_BLE_OBSERVER_PRIO 2
 #endif
 
 // <o> BLE_LESC_OBSERVER_PRIO  

@@ -60,9 +60,11 @@
 #include "ble_conn_params.h"
 #include "ble_db_discovery.h"
 #include "ble_lbs_c.h"
+#include "ble_thingy_uis_c.h"
 #include "ble_conn_state.h"
 #include "nrf_ble_gatt.h"
 #include "nrf_pwr_mgmt.h"
+#include "nrf_delay.h"
 
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
@@ -90,10 +92,12 @@
 
 
 NRF_BLE_GATT_DEF(m_gatt);                                               /**< GATT module instance. */
-BLE_LBS_C_ARRAY_DEF(m_lbs_c, NRF_SDH_BLE_CENTRAL_LINK_COUNT);           /**< LED Button client instances. */
+BLE_THINGY_UIS_C_ARRAY_DEF(m_thingy_uis_c, NRF_SDH_BLE_CENTRAL_LINK_COUNT);
 BLE_DB_DISCOVERY_ARRAY_DEF(m_db_disc, NRF_SDH_BLE_CENTRAL_LINK_COUNT);  /**< Database discovery module instances. */
 
-static char const m_target_periph_name[] = "Nordic_Blinky";             /**< Name of the device we try to connect to. This name is searched for in the scan report data*/
+APP_TIMER_DEF(m_app_timer_interface_update);
+
+static char const m_target_periph_name[] = "Thingy";             /**< Name of the device we try to connect to. This name is searched for in the scan report data*/
 
 static uint8_t m_scan_buffer_data[BLE_GAP_SCAN_BUFFER_MIN]; /**< buffer where advertising reports will be stored by the SoftDevice. */
 
@@ -174,11 +178,11 @@ static void scan_start(void)
  * @param[in] p_lbs_c     The instance of LBS_C that triggered the event.
  * @param[in] p_lbs_c_evt The LBS_C event.
  */
-static void lbs_c_evt_handler(ble_lbs_c_t * p_lbs_c, ble_lbs_c_evt_t * p_lbs_c_evt)
+static void thingy_uis_c_evt_handler(ble_thingy_uis_c_t * p_thingy_uis_c, ble_thingy_uis_c_evt_t * p_thingy_uis_c_evt)
 {
-    switch (p_lbs_c_evt->evt_type)
+    switch (p_thingy_uis_c_evt->evt_type)
     {
-        case BLE_LBS_C_EVT_DISCOVERY_COMPLETE:
+        /*case BLE_LBS_C_EVT_DISCOVERY_COMPLETE:
         {
             ret_code_t err_code;
 
@@ -207,13 +211,15 @@ static void lbs_c_evt_handler(ble_lbs_c_t * p_lbs_c, ble_lbs_c_evt_t * p_lbs_c_e
             {
                 bsp_board_led_off(LEDBUTTON_LED);
             }
-        } break; // BLE_LBS_C_EVT_BUTTON_NOTIFICATION
+        } break; // BLE_LBS_C_EVT_BUTTON_NOTIFICATION   */
 
         default:
             // No implementation needed.
             break;
     }
 }
+    
+    
 
 
 /**@brief Function for handling the advertising report BLE event.
@@ -228,6 +234,7 @@ static void on_adv_report(ble_gap_evt_adv_report_t const * p_adv_report)
                               p_adv_report->data.len,
                               m_target_periph_name))
     {
+        NRF_LOG_INFO("Name match, attempting to connect");
         // Name is a match, initiate connection.
         err_code = sd_ble_gap_connect(&p_adv_report->peer_addr,
                                       &m_scan_params,
@@ -269,9 +276,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 
             APP_ERROR_CHECK_BOOL(p_gap_evt->conn_handle < NRF_SDH_BLE_CENTRAL_LINK_COUNT);
 
-            err_code = ble_lbs_c_handles_assign(&m_lbs_c[p_gap_evt->conn_handle],
-                                                p_gap_evt->conn_handle,
-                                                NULL);
+            err_code = ble_thingy_uis_c_handles_assign(&m_thingy_uis_c[p_gap_evt->conn_handle], p_gap_evt->conn_handle, NULL);
             APP_ERROR_CHECK(err_code);
 
             err_code = ble_db_discovery_start(&m_db_disc[p_gap_evt->conn_handle],
@@ -380,17 +385,16 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 }
 
 
-/**@brief LED Button collector initialization. */
-static void lbs_c_init(void)
+static void thingy_c_init(void)
 {
-    ret_code_t       err_code;
-    ble_lbs_c_init_t lbs_c_init_obj;
-
-    lbs_c_init_obj.evt_handler = lbs_c_evt_handler;
-
+    ret_code_t err_code;
+    ble_thingy_uis_c_init_t thingy_uis_c_init_obj;
+    
+    thingy_uis_c_init_obj.evt_handler = thingy_uis_c_evt_handler;
+    
     for (uint32_t i = 0; i < NRF_SDH_BLE_CENTRAL_LINK_COUNT; i++)
     {
-        err_code = ble_lbs_c_init(&m_lbs_c[i], &lbs_c_init_obj);
+        err_code = ble_thingy_uis_c_init(&m_thingy_uis_c[i], &thingy_uis_c_init_obj);
         APP_ERROR_CHECK(err_code);
     }
 }
@@ -436,7 +440,7 @@ static ret_code_t led_status_send_to_all(uint8_t button_action)
 {
     ret_code_t err_code;
 
-    for (uint32_t i = 0; i< NRF_SDH_BLE_CENTRAL_LINK_COUNT; i++)
+    /*for (uint32_t i = 0; i< NRF_SDH_BLE_CENTRAL_LINK_COUNT; i++)
     {
         err_code = ble_lbs_led_status_send(&m_lbs_c[i], button_action);
         if (err_code != NRF_SUCCESS &&
@@ -445,7 +449,7 @@ static ret_code_t led_status_send_to_all(uint8_t button_action)
         {
             return err_code;
         }
-    }
+    }*/
         return NRF_SUCCESS;
 }
 
@@ -507,7 +511,8 @@ static void db_disc_handler(ble_db_discovery_evt_t * p_evt)
                   p_evt->conn_handle,
                   p_evt->conn_handle);
 
-    ble_lbs_on_db_disc_evt(&m_lbs_c[p_evt->conn_handle], p_evt);
+    //ble_lbs_on_db_disc_evt(&m_lbs_c[p_evt->conn_handle], p_evt);
+    ble_thingy_uis_on_db_disc_evt(&m_thingy_uis_c[p_evt->conn_handle], p_evt);
 }
 
 
@@ -571,6 +576,13 @@ static void gatt_init(void)
     APP_ERROR_CHECK(err_code);
 }
 
+static void interface_update_timer_callback(void *p)
+{
+    for(int i = 0; i < 2; i++)
+    {
+        ble_thingy_uis_led_set_constant(&m_thingy_uis_c[i], 255, 255, 0);
+    }
+}
 
 int main(void)
 {
@@ -583,15 +595,18 @@ int main(void)
     ble_stack_init();
     gatt_init();
     db_discovery_init();
-    lbs_c_init();
+    thingy_c_init();
     ble_conn_state_init();
 
     // Start execution.
-    NRF_LOG_INFO("Multilink example started.");
+    NRF_LOG_INFO("Thingy Pong started.");
     scan_start();
+    
+    app_timer_create(&m_app_timer_interface_update, APP_TIMER_MODE_REPEATED, interface_update_timer_callback);
+    app_timer_start(m_app_timer_interface_update, APP_TIMER_TICKS(5000), 0);
 
     for (;;)
     {
-        idle_state_handle();
+          idle_state_handle();
     }
 }
