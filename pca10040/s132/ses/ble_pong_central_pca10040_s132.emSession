@@ -24,6 +24,7 @@
   <ProjectSessionItem path="ble_app_multilink_central_pca10040_s132"/>
   <ProjectSessionItem path="ble_app_multilink_central_pca10040_s132;ble_app_multilink_central_pca10040_s132"/>
   <ProjectSessionItem path="ble_app_multilink_central_pca10040_s132;ble_app_multilink_central_pca10040_s132;Application"/>
+  <ProjectSessionItem path="ble_app_multilink_central_pca10040_s132;ble_app_multilink_central_pca10040_s132;nRF_Drivers"/>
   <ProjectSessionItem path="ble_app_multilink_central_pca10040_s132;ble_app_multilink_central_pca10040_s132;nRF_Libraries"/>
  </Project>
  <Register1>
@@ -45,7 +46,12 @@
   <Trace enabled="Yes"/>
  </TraceWindow>
  <Watch1>
-  <Watches active="1" update="Never"/>
+  <Watches active="1" update="Never">
+   <Watchpoint numelements="0" expression="(*p_evt).params.discovered_db" evalMode="0" name="discovered_db" radix="16" linenumber="243" filename="../../../ble_thingy_client/ble_thingy_tms_c.c" list=""/>
+   <Watchpoint numelements="0" expression="p_evt" evalMode="1" name="p_evt" radix="16" linenumber="231" filename="../../../ble_thingy_client/ble_thingy_tms_c.c" list=""/>
+   <Watchpoint numelements="0" expression="p_char" evalMode="0" name="p_char" radix="16" linenumber="268" filename="../../../ble_thingy_client/ble_thingy_tms_c.c" list=""/>
+   <Watchpoint numelements="0" expression="p_ble_thingy_tms_c" evalMode="1" name="p_ble_thingy_tms_c" radix="-1" linenumber="436" filename="../../../ble_thingy_client/ble_thingy_tms_c.c" list=""/>
+  </Watches>
  </Watch1>
  <Watch2>
   <Watches active="0" update="Never"/>
@@ -57,11 +63,11 @@
   <Watches active="0" update="Never"/>
  </Watch4>
  <Files>
-  <SessionOpenFile windowGroup="DockEditLeft" x="30" y="601" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../main.c" selected="1" top="545" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="11636" useTextEdit="1" useBinaryEdit="0" left="0" path="../config/sdk_config.h" selected="0" top="11596" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="590" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../main.c" selected="1" top="241" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="98" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/libraries/util/app_error_weak.c" selected="0" top="73" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="41" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../ble_thingy_client/ble_thingy_uis_c.c" selected="0" top="24" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="35" y="103" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../ble_thingy_client/ble_thingy_uis_c.h" selected="0" top="240" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="41" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../ble_thingy_client/ble_thingy_uis_c.c" selected="0" top="382" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="442" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../ble_thingy_client/ble_thingy_tms_c.c" selected="0" top="427" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="166" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../ble_thingy_client/ble_thingy_tms_c.h" selected="0" top="127" codecName="Default"/>
  </Files>
- <ARMCrossStudioWindow activeProject="ble_app_multilink_central_pca10040_s132" fileDialogDefaultFilter="" autoConnectTarget="J-Link" buildConfiguration="Release" debugSearchFileMap="" fileDialogInitialDirectory="C:/Nordic Semiconductor/nRF5_SDK_15.0.0_a53641a/examples/_too/ble_app_multilink_central/ble_thingy_client" debugSearchPath="" autoConnectCapabilities="3711"/>
+ <ARMCrossStudioWindow activeProject="ble_app_multilink_central_pca10040_s132" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Release" debugSearchFileMap="" fileDialogInitialDirectory="C:/Nordic Semiconductor/nRF5_SDK_15.0.0_a53641a/examples/_too/nrf52-ble-pong-central/ble_thingy_client" debugSearchPath="" autoConnectCapabilities="3199"/>
 </session>

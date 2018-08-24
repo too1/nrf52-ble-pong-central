@@ -11635,6 +11635,13 @@
 #define BLE_THINGY_UIS_C_BLE_OBSERVER_PRIO 2
 #endif
 
+// <o> BLE_THINGY_TMS_C_BLE_OBSERVER_PRIO  
+// <i> Priority with which BLE events are dispatched to the LED Button Service Client.
+
+#ifndef BLE_THINGY_TMS_C_BLE_OBSERVER_PRIO
+#define BLE_THINGY_TMS_C_BLE_OBSERVER_PRIO 2
+#endif
+
 // <o> BLE_LESC_OBSERVER_PRIO  
 // <i> Priority with which BLE events are dispatched to the BLE LESC module.
 

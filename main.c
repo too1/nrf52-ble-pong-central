@@ -61,6 +61,7 @@
 #include "ble_db_discovery.h"
 #include "ble_lbs_c.h"
 #include "ble_thingy_uis_c.h"
+#include "ble_thingy_tms_c.h"
 #include "ble_conn_state.h"
 #include "nrf_ble_gatt.h"
 #include "nrf_pwr_mgmt.h"
@@ -93,6 +94,7 @@
 
 NRF_BLE_GATT_DEF(m_gatt);                                               /**< GATT module instance. */
 BLE_THINGY_UIS_C_ARRAY_DEF(m_thingy_uis_c, NRF_SDH_BLE_CENTRAL_LINK_COUNT);
+BLE_THINGY_TMS_C_ARRAY_DEF(m_thingy_tms_c, NRF_SDH_BLE_CENTRAL_LINK_COUNT);
 BLE_DB_DISCOVERY_ARRAY_DEF(m_db_disc, NRF_SDH_BLE_CENTRAL_LINK_COUNT);  /**< Database discovery module instances. */
 
 APP_TIMER_DEF(m_app_timer_interface_update);
@@ -182,36 +184,11 @@ static void thingy_uis_c_evt_handler(ble_thingy_uis_c_t * p_thingy_uis_c, ble_th
 {
     switch (p_thingy_uis_c_evt->evt_type)
     {
-        /*case BLE_LBS_C_EVT_DISCOVERY_COMPLETE:
-        {
-            ret_code_t err_code;
-
-            NRF_LOG_INFO("LED Button service discovered on conn_handle 0x%x",
-                         p_lbs_c_evt->conn_handle);
-
-            err_code = app_button_enable();
-            APP_ERROR_CHECK(err_code);
-
-            // LED Button service discovered. Enable notification of Button.
-            err_code = ble_lbs_c_button_notif_enable(p_lbs_c);
-            APP_ERROR_CHECK(err_code);
-        } break; // BLE_LBS_C_EVT_DISCOVERY_COMPLETE
+        case BLE_LBS_C_EVT_DISCOVERY_COMPLETE:
+            break; // BLE_LBS_C_EVT_DISCOVERY_COMPLETE
 
         case BLE_LBS_C_EVT_BUTTON_NOTIFICATION:
-        {
-            NRF_LOG_INFO("Link 0x%x, Button state changed on peer to 0x%x",
-                         p_lbs_c_evt->conn_handle,
-                         p_lbs_c_evt->params.button.button_state);
-
-            if (p_lbs_c_evt->params.button.button_state)
-            {
-                bsp_board_led_on(LEDBUTTON_LED);
-            }
-            else
-            {
-                bsp_board_led_off(LEDBUTTON_LED);
-            }
-        } break; // BLE_LBS_C_EVT_BUTTON_NOTIFICATION   */
+            break; // BLE_LBS_C_EVT_BUTTON_NOTIFICATION   */
 
         default:
             // No implementation needed.
@@ -219,7 +196,25 @@ static void thingy_uis_c_evt_handler(ble_thingy_uis_c_t * p_thingy_uis_c, ble_th
     }
 }
     
-    
+static void thingy_tms_c_evt_handler(ble_thingy_tms_c_t * p_thingy_tms_c, ble_thingy_tms_c_evt_t * p_thingy_tms_c_evt)  
+{
+    switch (p_thingy_tms_c_evt->evt_type)
+    {
+        case BLE_THINGY_TMS_C_EVT_DISCOVERY_COMPLETE:
+            NRF_LOG_INFO("TMS service discovered");
+            break;
+        case BLE_THINGY_TMS_C_EVT_TAP_NOTIFICATION:
+            break;
+        case BLE_THINGY_TMS_C_EVT_RAW_NOTIFICATION:
+            {
+                ble_thingy_tms_raw_t *raw_data = &p_thingy_tms_c_evt->params.raw;
+                NRF_LOG_INFO("gyro %i, %i, %i", raw_data->gyro_x, raw_data->gyro_y, raw_data->gyro_z);
+            }   
+         break;
+        default:
+            break;
+    }  
+}
 
 
 /**@brief Function for handling the advertising report BLE event.
@@ -277,6 +272,9 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             APP_ERROR_CHECK_BOOL(p_gap_evt->conn_handle < NRF_SDH_BLE_CENTRAL_LINK_COUNT);
 
             err_code = ble_thingy_uis_c_handles_assign(&m_thingy_uis_c[p_gap_evt->conn_handle], p_gap_evt->conn_handle, NULL);
+            APP_ERROR_CHECK(err_code);
+            
+            err_code = ble_thingy_tms_c_handles_assign(&m_thingy_tms_c[p_gap_evt->conn_handle], p_gap_evt->conn_handle, NULL);
             APP_ERROR_CHECK(err_code);
 
             err_code = ble_db_discovery_start(&m_db_disc[p_gap_evt->conn_handle],
@@ -389,12 +387,16 @@ static void thingy_c_init(void)
 {
     ret_code_t err_code;
     ble_thingy_uis_c_init_t thingy_uis_c_init_obj;
+    ble_thingy_tms_c_init_t thingy_tms_c_init_obj;
     
     thingy_uis_c_init_obj.evt_handler = thingy_uis_c_evt_handler;
+    thingy_tms_c_init_obj.evt_handler = thingy_tms_c_evt_handler;
     
     for (uint32_t i = 0; i < NRF_SDH_BLE_CENTRAL_LINK_COUNT; i++)
     {
         err_code = ble_thingy_uis_c_init(&m_thingy_uis_c[i], &thingy_uis_c_init_obj);
+        APP_ERROR_CHECK(err_code);
+        err_code = ble_thingy_tms_c_init(&m_thingy_tms_c[i], &thingy_tms_c_init_obj);
         APP_ERROR_CHECK(err_code);
     }
 }
@@ -511,8 +513,8 @@ static void db_disc_handler(ble_db_discovery_evt_t * p_evt)
                   p_evt->conn_handle,
                   p_evt->conn_handle);
 
-    //ble_lbs_on_db_disc_evt(&m_lbs_c[p_evt->conn_handle], p_evt);
     ble_thingy_uis_on_db_disc_evt(&m_thingy_uis_c[p_evt->conn_handle], p_evt);
+    ble_thingy_tms_on_db_disc_evt(&m_thingy_tms_c[p_evt->conn_handle], p_evt);
 }
 
 
@@ -578,9 +580,10 @@ static void gatt_init(void)
 
 static void interface_update_timer_callback(void *p)
 {
-    for(int i = 0; i < 2; i++)
+    for(int i = 0; i < 1; i++)
     {
         ble_thingy_uis_led_set_constant(&m_thingy_uis_c[i], 255, 255, 0);
+        ble_thingy_tms_c_raw_notif_enable(&m_thingy_tms_c[i]);
     }
 }
 
