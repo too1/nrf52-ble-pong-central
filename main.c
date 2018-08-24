@@ -52,6 +52,7 @@
 #include "nrf_sdh.h"
 #include "nrf_sdh_ble.h"
 #include "app_timer.h"
+#include "app_uart.h"
 #include "bsp_btn_ble.h"
 #include "ble.h"
 #include "ble_hci.h"
@@ -66,6 +67,7 @@
 #include "nrf_ble_gatt.h"
 #include "nrf_pwr_mgmt.h"
 #include "nrf_delay.h"
+#include "app_pong.h"
 
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
@@ -208,7 +210,7 @@ static void thingy_tms_c_evt_handler(ble_thingy_tms_c_t * p_thingy_tms_c, ble_th
         case BLE_THINGY_TMS_C_EVT_RAW_NOTIFICATION:
             {
                 ble_thingy_tms_raw_t *raw_data = &p_thingy_tms_c_evt->params.raw;
-                NRF_LOG_INFO("gyro %i, %i, %i", raw_data->gyro_x, raw_data->gyro_y, raw_data->gyro_z);
+                //NRF_LOG_INFO("gyro %i, %i, %i", raw_data->gyro_x, raw_data->gyro_y, raw_data->gyro_z);
             }   
          break;
         default:
@@ -586,6 +588,90 @@ static void interface_update_timer_callback(void *p)
         ble_thingy_tms_c_raw_notif_enable(&m_thingy_tms_c[i]);
     }
 }
+static void pong_draw_screen(pong_gamestate_t *gamestate)
+{
+    static divider = 0;
+    if(++divider > 4)
+    {
+        divider = 0;
+        uint8_t screen_matrix[10][10] = {0};
+        uint32_t pong_screen_x = gamestate->pong_pos_x / 100;    
+        uint32_t pong_screen_y = gamestate->pong_pos_y / 100;
+        
+        screen_matrix[pong_screen_x][pong_screen_y] = 1;
+        printf("\r\n---------------------\r\n");
+        for(int y = 0; y < 10; y++)
+        {
+            for(int x = 0; x < 10; x++)
+            {
+                screen_matrix[x][y] == 1 ? printf("X") : printf(" ");
+            }
+            printf("\r\n");
+               
+        }
+    }
+}
+
+static void app_pong_event_handler(pong_event_t *evt)
+{
+    switch(evt->evt_type)
+    {
+        case PONG_EVENT_GAMESTATE_UPDATE:
+            pong_draw_screen(evt->game_state);
+            //NRF_LOG_INFO("x: %i, y: %i", evt->game_state->pong_pos_x, evt->game_state->pong_pos_y);
+            break;
+            
+        default:
+            break;
+    }
+}
+
+static void pong_init(void)
+{
+    pong_config_t config;
+    config.event_handler = app_pong_event_handler;
+    app_pong_init(&config);
+}
+
+void uart_error_handle(app_uart_evt_t * p_event)
+{
+    if (p_event->evt_type == APP_UART_COMMUNICATION_ERROR)
+    {
+        APP_ERROR_HANDLER(p_event->data.error_communication);
+    }
+    else if (p_event->evt_type == APP_UART_FIFO_ERROR)
+    {
+        APP_ERROR_HANDLER(p_event->data.error_code);
+    }
+}
+
+static void uart_init(void)
+{
+    uint32_t err_code;
+     const app_uart_comm_params_t comm_params =
+      {
+          RX_PIN_NUMBER,
+          TX_PIN_NUMBER,
+          RTS_PIN_NUMBER,
+          CTS_PIN_NUMBER,
+          APP_UART_FLOW_CONTROL_DISABLED,
+          false,
+#if defined (UART_PRESENT)
+          UART_BAUDRATE_BAUDRATE_Baud115200
+#else
+          NRF_UARTE_BAUDRATE_115200
+#endif
+      };
+
+    APP_UART_FIFO_INIT(&comm_params,
+                         16,
+                         128,
+                         uart_error_handle,
+                         APP_IRQ_PRIORITY_LOWEST,
+                         err_code);
+
+    APP_ERROR_CHECK(err_code);   
+}
 
 int main(void)
 {
@@ -593,6 +679,7 @@ int main(void)
     log_init();
     timer_init();
     leds_init();
+    uart_init();
     buttons_init();
     power_management_init();
     ble_stack_init();
@@ -607,7 +694,11 @@ int main(void)
     
     app_timer_create(&m_app_timer_interface_update, APP_TIMER_MODE_REPEATED, interface_update_timer_callback);
     app_timer_start(m_app_timer_interface_update, APP_TIMER_TICKS(5000), 0);
+    
+    pong_init();
 
+    app_pong_start_game();
+    
     for (;;)
     {
           idle_state_handle();
