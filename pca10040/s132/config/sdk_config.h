@@ -76,6 +76,10 @@
 #define BLE_DB_DISCOVERY_ENABLED 1
 #endif
 
+#ifndef BLE_GATT_DB_MAX_CHARS
+#define BLE_GATT_DB_MAX_CHARS 20
+#endif
+
 // <q> BLE_DTM_ENABLED  - ble_dtm - Module for testing RF/PHY using DTM commands
  
 

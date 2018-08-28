@@ -149,6 +149,8 @@ static void on_write_rsp(ble_thingy_tms_c_t * p_ble_thingy_tms_c, ble_evt_t cons
  */
 static void on_hvx(ble_thingy_tms_c_t * p_ble_thingy_tms_c, ble_evt_t const * p_ble_evt)
 {
+    static ble_thingy_tms_c_evt_t ble_thingy_tms_c_evt;
+    
     // Check if the event is on the link for this instance
     if (p_ble_thingy_tms_c->conn_handle != p_ble_evt->evt.gattc_evt.conn_handle)
     {
@@ -159,11 +161,42 @@ static void on_hvx(ble_thingy_tms_c_t * p_ble_thingy_tms_c, ble_evt_t const * p_
     {
         if (p_ble_evt->evt.gattc_evt.params.hvx.len == 2)
         {
-            ble_thingy_tms_c_evt_t ble_thingy_tms_c_evt;
-
             ble_thingy_tms_c_evt.evt_type                   = BLE_THINGY_TMS_C_EVT_TAP_NOTIFICATION;
             ble_thingy_tms_c_evt.conn_handle                = p_ble_thingy_tms_c->conn_handle;
-            //ble_thingy_tms_c_evt.params.button.button_state = p_ble_evt->evt.gattc_evt.params.hvx.data[0];
+            memcpy(&ble_thingy_tms_c_evt.params.tap, p_ble_evt->evt.gattc_evt.params.hvx.data, sizeof(ble_thingy_tms_tap_t));
+            p_ble_thingy_tms_c->evt_handler(p_ble_thingy_tms_c, &ble_thingy_tms_c_evt);
+        }
+    }
+    // Check if this is a Orientation notification.
+    if (p_ble_evt->evt.gattc_evt.params.hvx.handle == p_ble_thingy_tms_c->peer_thingy_tms_db.orientation_handle)
+    {
+        if (p_ble_evt->evt.gattc_evt.params.hvx.len == 1)
+        {
+            ble_thingy_tms_c_evt.evt_type                   = BLE_THINGY_TMS_C_EVT_ORIENTATION_NOTIFICATION;
+            ble_thingy_tms_c_evt.conn_handle                = p_ble_thingy_tms_c->conn_handle;
+            memcpy(&ble_thingy_tms_c_evt.params.orientation, p_ble_evt->evt.gattc_evt.params.hvx.data, sizeof(ble_thingy_tms_orientation_t));
+            p_ble_thingy_tms_c->evt_handler(p_ble_thingy_tms_c, &ble_thingy_tms_c_evt);
+        }
+    }
+    // Check if this is a Quaternion notification.
+    if (p_ble_evt->evt.gattc_evt.params.hvx.handle == p_ble_thingy_tms_c->peer_thingy_tms_db.quaternion_handle)
+    {
+        if (p_ble_evt->evt.gattc_evt.params.hvx.len == 16)
+        {
+            ble_thingy_tms_c_evt.evt_type                   = BLE_THINGY_TMS_C_EVT_QUATERNION_NOTIFICATION;
+            ble_thingy_tms_c_evt.conn_handle                = p_ble_thingy_tms_c->conn_handle;
+            memcpy(&ble_thingy_tms_c_evt.params.quaternion, p_ble_evt->evt.gattc_evt.params.hvx.data, sizeof(ble_thingy_tms_quaternion_t));
+            p_ble_thingy_tms_c->evt_handler(p_ble_thingy_tms_c, &ble_thingy_tms_c_evt);
+        }
+    }
+    // Check if this is a Step counter notification.
+    if (p_ble_evt->evt.gattc_evt.params.hvx.handle == p_ble_thingy_tms_c->peer_thingy_tms_db.step_counter_handle)
+    {
+        if (p_ble_evt->evt.gattc_evt.params.hvx.len == 8)
+        {
+            ble_thingy_tms_c_evt.evt_type                   = BLE_THINGY_TMS_C_EVT_STEP_COUNTER_NOTIFICATION;
+            ble_thingy_tms_c_evt.conn_handle                = p_ble_thingy_tms_c->conn_handle;
+            memcpy(&ble_thingy_tms_c_evt.params.step_counter, p_ble_evt->evt.gattc_evt.params.hvx.data, sizeof(ble_thingy_tms_step_counter_t));
             p_ble_thingy_tms_c->evt_handler(p_ble_thingy_tms_c, &ble_thingy_tms_c_evt);
         }
     }
@@ -172,22 +205,56 @@ static void on_hvx(ble_thingy_tms_c_t * p_ble_thingy_tms_c, ble_evt_t const * p_
     {
         if (p_ble_evt->evt.gattc_evt.params.hvx.len == 18)
         {
-            ble_thingy_tms_c_evt_t ble_thingy_tms_c_evt;
-
             ble_thingy_tms_c_evt.evt_type           = BLE_THINGY_TMS_C_EVT_RAW_NOTIFICATION;
             ble_thingy_tms_c_evt.conn_handle        = p_ble_thingy_tms_c->conn_handle;
-            ble_thingy_tms_c_evt.params.raw.acc_x   = (uint16_t)p_ble_evt->evt.gattc_evt.params.hvx.data[0] | (uint16_t)p_ble_evt->evt.gattc_evt.params.hvx.data[1] << 8;
-            ble_thingy_tms_c_evt.params.raw.acc_y   = (uint16_t)p_ble_evt->evt.gattc_evt.params.hvx.data[2] | (uint16_t)p_ble_evt->evt.gattc_evt.params.hvx.data[3] << 8;
-            ble_thingy_tms_c_evt.params.raw.acc_z   = (uint16_t)p_ble_evt->evt.gattc_evt.params.hvx.data[4] | (uint16_t)p_ble_evt->evt.gattc_evt.params.hvx.data[5] << 8;
-            ble_thingy_tms_c_evt.params.raw.gyro_x   = (uint16_t)p_ble_evt->evt.gattc_evt.params.hvx.data[6] | (uint16_t)p_ble_evt->evt.gattc_evt.params.hvx.data[7] << 8;
-            ble_thingy_tms_c_evt.params.raw.gyro_y   = (uint16_t)p_ble_evt->evt.gattc_evt.params.hvx.data[8] | (uint16_t)p_ble_evt->evt.gattc_evt.params.hvx.data[9] << 8;
-            ble_thingy_tms_c_evt.params.raw.gyro_z   = (uint16_t)p_ble_evt->evt.gattc_evt.params.hvx.data[10] | (uint16_t)p_ble_evt->evt.gattc_evt.params.hvx.data[11] << 8;
-            ble_thingy_tms_c_evt.params.raw.compass_x   = (uint16_t)p_ble_evt->evt.gattc_evt.params.hvx.data[12] | (uint16_t)p_ble_evt->evt.gattc_evt.params.hvx.data[13] << 8;
-            ble_thingy_tms_c_evt.params.raw.compass_y   = (uint16_t)p_ble_evt->evt.gattc_evt.params.hvx.data[14] | (uint16_t)p_ble_evt->evt.gattc_evt.params.hvx.data[15] << 8;
-            ble_thingy_tms_c_evt.params.raw.compass_z   = (uint16_t)p_ble_evt->evt.gattc_evt.params.hvx.data[16] | (uint16_t)p_ble_evt->evt.gattc_evt.params.hvx.data[17] << 8;
+            memcpy(&ble_thingy_tms_c_evt.params.raw, p_ble_evt->evt.gattc_evt.params.hvx.data, sizeof(ble_thingy_tms_raw_t));
             p_ble_thingy_tms_c->evt_handler(p_ble_thingy_tms_c, &ble_thingy_tms_c_evt);
         }
     }
+    // Check if this is a Euler notification.
+    if (p_ble_evt->evt.gattc_evt.params.hvx.handle == p_ble_thingy_tms_c->peer_thingy_tms_db.euler_handle)
+    {
+        if (p_ble_evt->evt.gattc_evt.params.hvx.len == 12)
+        {
+            ble_thingy_tms_c_evt.evt_type                   = BLE_THINGY_TMS_C_EVT_EULER_NOTIFICATION;
+            ble_thingy_tms_c_evt.conn_handle                = p_ble_thingy_tms_c->conn_handle;
+            memcpy(&ble_thingy_tms_c_evt.params.euler, p_ble_evt->evt.gattc_evt.params.hvx.data, sizeof(ble_thingy_tms_euler_t));
+            p_ble_thingy_tms_c->evt_handler(p_ble_thingy_tms_c, &ble_thingy_tms_c_evt);
+        }
+    }
+    // Check if this is a Rotation matrix notification.
+    if (p_ble_evt->evt.gattc_evt.params.hvx.handle == p_ble_thingy_tms_c->peer_thingy_tms_db.rotation_handle)
+    {
+        if (p_ble_evt->evt.gattc_evt.params.hvx.len == 18)
+        {
+            ble_thingy_tms_c_evt.evt_type                   = BLE_THINGY_TMS_C_EVT_ROTATION_MATRIX_NOTIFICATION;
+            ble_thingy_tms_c_evt.conn_handle                = p_ble_thingy_tms_c->conn_handle;
+            memcpy(&ble_thingy_tms_c_evt.params.rotation_matrix, p_ble_evt->evt.gattc_evt.params.hvx.data, sizeof(ble_thingy_tms_rotation_matrix_t));
+            p_ble_thingy_tms_c->evt_handler(p_ble_thingy_tms_c, &ble_thingy_tms_c_evt);
+        }
+    }
+    // Check if this is a Heading notification.
+    if (p_ble_evt->evt.gattc_evt.params.hvx.handle == p_ble_thingy_tms_c->peer_thingy_tms_db.heading_handle)
+    {
+        if (p_ble_evt->evt.gattc_evt.params.hvx.len == 4)
+        {
+            ble_thingy_tms_c_evt.evt_type                   = BLE_THINGY_TMS_C_EVT_HEADING_NOTIFICATION;
+            ble_thingy_tms_c_evt.conn_handle                = p_ble_thingy_tms_c->conn_handle;
+            memcpy(&ble_thingy_tms_c_evt.params.heading, p_ble_evt->evt.gattc_evt.params.hvx.data, sizeof(ble_thingy_tms_heading_t));
+            p_ble_thingy_tms_c->evt_handler(p_ble_thingy_tms_c, &ble_thingy_tms_c_evt);
+        }
+    }
+    // Check if this is a Gravity notification.
+    if (p_ble_evt->evt.gattc_evt.params.hvx.handle == p_ble_thingy_tms_c->peer_thingy_tms_db.gravity_handle)
+    {
+        if (p_ble_evt->evt.gattc_evt.params.hvx.len == 12)
+        {
+            ble_thingy_tms_c_evt.evt_type                   = BLE_THINGY_TMS_C_EVT_GRAVITY_NOTIFICATION;
+            ble_thingy_tms_c_evt.conn_handle                = p_ble_thingy_tms_c->conn_handle;
+            memcpy(&ble_thingy_tms_c_evt.params.gravity, p_ble_evt->evt.gattc_evt.params.hvx.data, sizeof(ble_thingy_tms_gravity_t));
+            p_ble_thingy_tms_c->evt_handler(p_ble_thingy_tms_c, &ble_thingy_tms_c_evt);
+        }
+    }   
 }
 
 
@@ -294,6 +361,22 @@ void ble_thingy_tms_on_db_disc_evt(ble_thingy_tms_c_t * p_ble_thingy_tms_c, ble_
         if (p_ble_thingy_tms_c->conn_handle != BLE_CONN_HANDLE_INVALID)
         {
             if ((p_ble_thingy_tms_c->peer_thingy_tms_db.config_handle         == BLE_GATT_HANDLE_INVALID)&&
+                (p_ble_thingy_tms_c->peer_thingy_tms_db.tap_cccd_handle      == BLE_GATT_HANDLE_INVALID)&&
+                (p_ble_thingy_tms_c->peer_thingy_tms_db.tap_handle      == BLE_GATT_HANDLE_INVALID)&&
+                (p_ble_thingy_tms_c->peer_thingy_tms_db.orientation_cccd_handle == BLE_GATT_HANDLE_INVALID)&&
+                (p_ble_thingy_tms_c->peer_thingy_tms_db.orientation_handle      == BLE_GATT_HANDLE_INVALID)&&
+                (p_ble_thingy_tms_c->peer_thingy_tms_db.quaternion_cccd_handle      == BLE_GATT_HANDLE_INVALID)&&
+                (p_ble_thingy_tms_c->peer_thingy_tms_db.quaternion_handle      == BLE_GATT_HANDLE_INVALID)&&
+                (p_ble_thingy_tms_c->peer_thingy_tms_db.step_counter_cccd_handle      == BLE_GATT_HANDLE_INVALID)&&
+                (p_ble_thingy_tms_c->peer_thingy_tms_db.step_counter_handle      == BLE_GATT_HANDLE_INVALID)&&
+                (p_ble_thingy_tms_c->peer_thingy_tms_db.raw_cccd_handle      == BLE_GATT_HANDLE_INVALID)&&
+                (p_ble_thingy_tms_c->peer_thingy_tms_db.raw_handle      == BLE_GATT_HANDLE_INVALID)&&
+                (p_ble_thingy_tms_c->peer_thingy_tms_db.rotation_cccd_handle      == BLE_GATT_HANDLE_INVALID)&&
+                (p_ble_thingy_tms_c->peer_thingy_tms_db.rotation_handle      == BLE_GATT_HANDLE_INVALID)&&
+                (p_ble_thingy_tms_c->peer_thingy_tms_db.heading_cccd_handle      == BLE_GATT_HANDLE_INVALID)&&
+                (p_ble_thingy_tms_c->peer_thingy_tms_db.heading_handle      == BLE_GATT_HANDLE_INVALID)&&
+                (p_ble_thingy_tms_c->peer_thingy_tms_db.gravity_cccd_handle      == BLE_GATT_HANDLE_INVALID)&&
+                (p_ble_thingy_tms_c->peer_thingy_tms_db.gravity_handle      == BLE_GATT_HANDLE_INVALID)&&
                 (p_ble_thingy_tms_c->peer_thingy_tms_db.euler_cccd_handle      == BLE_GATT_HANDLE_INVALID)&&
                 (p_ble_thingy_tms_c->peer_thingy_tms_db.euler_handle   == BLE_GATT_HANDLE_INVALID))
             {
@@ -415,36 +498,63 @@ static uint32_t cccd_configure(uint16_t conn_handle, uint16_t handle_cccd, bool 
     return NRF_SUCCESS;
 }
 
+static uint32_t cccd_configure_w_checking(ble_thingy_tms_c_t * p_ble_thingy_tms_c, uint16_t handle_cccd, bool enable)
+{
+    VERIFY_PARAM_NOT_NULL(p_ble_thingy_tms_c);
+    
+    if (p_ble_thingy_tms_c->conn_handle == BLE_CONN_HANDLE_INVALID)
+    {
+        return NRF_ERROR_INVALID_STATE;
+    }
+    
+    return cccd_configure(p_ble_thingy_tms_c->conn_handle, handle_cccd, true);
+}
+
 
 uint32_t ble_thingy_tms_c_tap_notif_enable(ble_thingy_tms_c_t * p_ble_thingy_tms_c)
 {
-    VERIFY_PARAM_NOT_NULL(p_ble_thingy_tms_c);
-
-    if (p_ble_thingy_tms_c->conn_handle == BLE_CONN_HANDLE_INVALID)
-    {
-        return NRF_ERROR_INVALID_STATE;
-    }
-
-    return cccd_configure(p_ble_thingy_tms_c->conn_handle,
-                          p_ble_thingy_tms_c->peer_thingy_tms_db.tap_cccd_handle,
-                          true);
+    return cccd_configure_w_checking(p_ble_thingy_tms_c, p_ble_thingy_tms_c->peer_thingy_tms_db.tap_cccd_handle, true);
 }
-                      
+
+uint32_t ble_thingy_tms_c_orientation_notif_enable(ble_thingy_tms_c_t * p_ble_thingy_tms_c)
+{
+    return cccd_configure_w_checking(p_ble_thingy_tms_c, p_ble_thingy_tms_c->peer_thingy_tms_db.orientation_cccd_handle, true);
+}
+
+uint32_t ble_thingy_tms_c_quaternion_notif_enable(ble_thingy_tms_c_t * p_ble_thingy_tms_c)
+{
+    return cccd_configure_w_checking(p_ble_thingy_tms_c, p_ble_thingy_tms_c->peer_thingy_tms_db.quaternion_cccd_handle, true);
+}
+
+uint32_t ble_thingy_tms_c_step_counter_notif_enable(ble_thingy_tms_c_t * p_ble_thingy_tms_c)
+{
+    return cccd_configure_w_checking(p_ble_thingy_tms_c, p_ble_thingy_tms_c->peer_thingy_tms_db.step_counter_cccd_handle, true);
+}
 
 uint32_t ble_thingy_tms_c_raw_notif_enable(ble_thingy_tms_c_t * p_ble_thingy_tms_c)
 {
-    VERIFY_PARAM_NOT_NULL(p_ble_thingy_tms_c);
-
-    if (p_ble_thingy_tms_c->conn_handle == BLE_CONN_HANDLE_INVALID)
-    {
-        return NRF_ERROR_INVALID_STATE;
-    }
-
-    return cccd_configure(p_ble_thingy_tms_c->conn_handle,
-                          p_ble_thingy_tms_c->peer_thingy_tms_db.raw_cccd_handle,
-                          true);
+    return cccd_configure_w_checking(p_ble_thingy_tms_c, p_ble_thingy_tms_c->peer_thingy_tms_db.raw_cccd_handle, true);
 }
 
+uint32_t ble_thingy_tms_c_euler_notif_enable(ble_thingy_tms_c_t * p_ble_thingy_tms_c)
+{
+    return cccd_configure_w_checking(p_ble_thingy_tms_c, p_ble_thingy_tms_c->peer_thingy_tms_db.euler_cccd_handle, true);
+}
+
+uint32_t ble_thingy_tms_c_rotation_matrix_notif_enable(ble_thingy_tms_c_t * p_ble_thingy_tms_c)
+{
+    return cccd_configure_w_checking(p_ble_thingy_tms_c, p_ble_thingy_tms_c->peer_thingy_tms_db.rotation_cccd_handle, true);
+}
+
+uint32_t ble_thingy_tms_c_heading_notif_enable(ble_thingy_tms_c_t * p_ble_thingy_tms_c)
+{
+    return cccd_configure_w_checking(p_ble_thingy_tms_c, p_ble_thingy_tms_c->peer_thingy_tms_db.heading_cccd_handle, true);
+}
+
+uint32_t ble_thingy_tms_c_gravity_notif_enable(ble_thingy_tms_c_t * p_ble_thingy_tms_c)
+{
+    return cccd_configure_w_checking(p_ble_thingy_tms_c, p_ble_thingy_tms_c->peer_thingy_tms_db.gravity_cccd_handle, true);
+}
 
 uint32_t ble_thingy_tms_c_handles_assign(ble_thingy_tms_c_t    * p_ble_thingy_tms_c,
                                   uint16_t         conn_handle,

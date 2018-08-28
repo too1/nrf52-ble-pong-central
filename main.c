@@ -187,9 +187,11 @@ static void thingy_uis_c_evt_handler(ble_thingy_uis_c_t * p_thingy_uis_c, ble_th
     switch (p_thingy_uis_c_evt->evt_type)
     {
         case BLE_LBS_C_EVT_DISCOVERY_COMPLETE:
+            ble_thingy_uis_c_button_notif_enable(p_thingy_uis_c);
             break; // BLE_LBS_C_EVT_DISCOVERY_COMPLETE
 
         case BLE_LBS_C_EVT_BUTTON_NOTIFICATION:
+            NRF_LOG_INFO("Button pressed");
             break; // BLE_LBS_C_EVT_BUTTON_NOTIFICATION   */
 
         default:
@@ -204,15 +206,28 @@ static void thingy_tms_c_evt_handler(ble_thingy_tms_c_t * p_thingy_tms_c, ble_th
     {
         case BLE_THINGY_TMS_C_EVT_DISCOVERY_COMPLETE:
             NRF_LOG_INFO("TMS service discovered");
+            ble_thingy_tms_c_euler_notif_enable(p_thingy_tms_c);
             break;
         case BLE_THINGY_TMS_C_EVT_TAP_NOTIFICATION:
             break;
         case BLE_THINGY_TMS_C_EVT_RAW_NOTIFICATION:
             {
                 ble_thingy_tms_raw_t *raw_data = &p_thingy_tms_c_evt->params.raw;
-                //NRF_LOG_INFO("gyro %i, %i, %i", raw_data->gyro_x, raw_data->gyro_y, raw_data->gyro_z);
+                NRF_LOG_INFO("gyro %i, %i, %i", raw_data->gyro_x, raw_data->gyro_y, raw_data->gyro_z);
             }   
-         break;
+            break;
+        case BLE_THINGY_TMS_C_EVT_EULER_NOTIFICATION:
+            {
+                ble_thingy_tms_euler_t *euler_data = &p_thingy_tms_c_evt->params.euler;
+                NRF_LOG_INFO("euler %i, %i, %i", euler_data->roll / 1024 / 1024, euler_data->pitch / 1024 / 1024, euler_data->yaw / 1024 / 1024);
+            }   
+            break;
+        case BLE_THINGY_TMS_C_EVT_GRAVITY_NOTIFICATION:
+            {
+                ble_thingy_tms_gravity_t *gravity_data = &p_thingy_tms_c_evt->params.gravity;
+                NRF_LOG_INFO("gravity %i", gravity_data->x);
+            }   
+            break;
         default:
             break;
     }  
@@ -584,8 +599,10 @@ static void interface_update_timer_callback(void *p)
 {
     for(int i = 0; i < 1; i++)
     {
-        ble_thingy_uis_led_set_constant(&m_thingy_uis_c[i], 255, 255, 0);
-        ble_thingy_tms_c_raw_notif_enable(&m_thingy_tms_c[i]);
+        ble_thingy_uis_led_set_constant(&m_thingy_uis_c[i], 0, 255, 255);
+        //ble_thingy_tms_c_raw_notif_enable(&m_thingy_tms_c[i]);
+        
+
     }
 }
 static void pong_draw_screen(pong_gamestate_t *gamestate)

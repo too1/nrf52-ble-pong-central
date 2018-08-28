@@ -119,6 +119,25 @@ typedef struct
 
 typedef struct
 {
+    uint8_t orientation;
+} ble_thingy_tms_orientation_t;
+
+typedef struct
+{
+    int32_t w;
+    int32_t x;
+    int32_t y;
+    int32_t z;
+} ble_thingy_tms_quaternion_t;
+
+typedef struct
+{
+    uint32_t steps;
+    uint32_t time; // Time in milliseconds
+} ble_thingy_tms_step_counter_t;
+
+typedef struct
+{
     uint16_t acc_x;
     uint16_t acc_y;
     uint16_t acc_z;
@@ -130,7 +149,29 @@ typedef struct
     uint16_t compass_z;
 } ble_thingy_tms_raw_t;
 
+typedef struct
+{
+    int32_t roll;
+    int32_t pitch;
+    int32_t yaw;
+} ble_thingy_tms_euler_t;
 
+typedef struct
+{
+    int16_t matrix[9];
+} ble_thingy_tms_rotation_matrix_t;
+
+typedef struct
+{
+    int32_t heading;
+} ble_thingy_tms_heading_t;
+
+typedef struct
+{
+    float x;
+    float y;
+    float z;
+} ble_thingy_tms_gravity_t;
 
 /**@brief Structure containing the handles related to the LED Button Service found on the peer. */
 typedef struct
@@ -163,9 +204,16 @@ typedef struct
     uint16_t             conn_handle; /**< Connection handle on which the event occured.*/
     union
     {
-        ble_thingy_tms_tap_t tap;      /**< Tap Value received. This will be filled if the evt_type is @ref BLE_THINGY_TMS_C_EVT_TAP_NOTIFICATION. */
-        ble_thingy_tms_raw_t raw;
-        thingy_tms_db_t     peer_db;         /**< LED Button Service related handles found on the peer device. This will be filled if the evt_type is @ref BLE_THINGY_TMS_C_EVT_DISCOVERY_COMPLETE.*/
+        ble_thingy_tms_tap_t                tap;     
+        ble_thingy_tms_orientation_t        orientation;
+        ble_thingy_tms_quaternion_t         quaternion;
+        ble_thingy_tms_step_counter_t       step_counter;
+        ble_thingy_tms_raw_t                raw;
+        ble_thingy_tms_euler_t              euler;
+        ble_thingy_tms_rotation_matrix_t    rotation_matrix;
+        ble_thingy_tms_heading_t            heading;
+        ble_thingy_tms_gravity_t            gravity;
+        thingy_tms_db_t     peer_db;  
     } params;
 } ble_thingy_tms_c_evt_t;
 
@@ -240,7 +288,21 @@ void ble_thingy_tms_c_on_ble_evt(ble_evt_t const * p_ble_evt, void * p_context);
  */
 uint32_t ble_thingy_tms_c_tap_notif_enable(ble_thingy_tms_c_t * p_ble_thingy_tms_c);
 
+uint32_t ble_thingy_tms_c_orientation_notif_enable(ble_thingy_tms_c_t * p_ble_thingy_tms_c);
+
+uint32_t ble_thingy_tms_c_quaternion_notif_enable(ble_thingy_tms_c_t * p_ble_thingy_tms_c);
+
+uint32_t ble_thingy_tms_c_step_counter_notif_enable(ble_thingy_tms_c_t * p_ble_thingy_tms_c);
+
 uint32_t ble_thingy_tms_c_raw_notif_enable(ble_thingy_tms_c_t * p_ble_thingy_tms_c);
+
+uint32_t ble_thingy_tms_c_euler_notif_enable(ble_thingy_tms_c_t * p_ble_thingy_tms_c);
+
+uint32_t ble_thingy_tms_c_rotation_matrix_notif_enable(ble_thingy_tms_c_t * p_ble_thingy_tms_c);
+
+uint32_t ble_thingy_tms_c_heading_notif_enable(ble_thingy_tms_c_t * p_ble_thingy_tms_c);
+
+uint32_t ble_thingy_tms_c_gravity_notif_enable(ble_thingy_tms_c_t * p_ble_thingy_tms_c);
 
 
 /**@brief Function for handling events from the database discovery module.
