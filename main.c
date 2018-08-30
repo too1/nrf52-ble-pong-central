@@ -101,7 +101,7 @@ BLE_DB_DISCOVERY_ARRAY_DEF(m_db_disc, NRF_SDH_BLE_CENTRAL_LINK_COUNT);  /**< Dat
 
 APP_TIMER_DEF(m_app_timer_interface_update);
 
-static char const m_target_periph_name[] = "Thingy";             /**< Name of the device we try to connect to. This name is searched for in the scan report data*/
+static char const m_target_periph_name[] = "PongThin";             /**< Name of the device we try to connect to. This name is searched for in the scan report data*/
 
 static uint8_t m_scan_buffer_data[BLE_GAP_SCAN_BUFFER_MIN]; /**< buffer where advertising reports will be stored by the SoftDevice. */
 
@@ -218,8 +218,26 @@ static void thingy_tms_c_evt_handler(ble_thingy_tms_c_t * p_thingy_tms_c, ble_th
             break;
         case BLE_THINGY_TMS_C_EVT_EULER_NOTIFICATION:
             {
+                uint32_t paddle_percentage = 0xFFFF;
+                int32_t euler_roll_degrees;
                 ble_thingy_tms_euler_t *euler_data = &p_thingy_tms_c_evt->params.euler;
-                NRF_LOG_INFO("euler %i, %i, %i", euler_data->roll / 1024 / 1024, euler_data->pitch / 1024 / 1024, euler_data->yaw / 1024 / 1024);
+                euler_roll_degrees = euler_data->roll / 0xFFFF;
+                if(euler_roll_degrees < 60 && euler_roll_degrees > -60)
+                {
+                    paddle_percentage = (euler_roll_degrees + 60) * 100 / 120;
+                }
+                else if(euler_roll_degrees < -120)
+                {
+                    paddle_percentage = (-120 - euler_roll_degrees) * 50 / 60;
+                }
+                else if(euler_roll_degrees > 120)
+                {
+                    paddle_percentage = (180 - euler_roll_degrees) * 50 / 60 + 50;
+                }
+                else if(euler_roll_degrees < 0) paddle_percentage = 0;
+                else paddle_percentage = 100;
+                if(paddle_percentage != 0xFFFF)NRF_LOG_INFO("Paddle!!%i", paddle_percentage);
+                //NRF_LOG_INFO("euler %i, %i, %i", euler_data->roll / 1024 / 1024, euler_data->pitch / 1024 / 1024, euler_data->yaw / 1024 / 1024);
             }   
             break;
         case BLE_THINGY_TMS_C_EVT_GRAVITY_NOTIFICATION:
@@ -605,23 +623,37 @@ static void interface_update_timer_callback(void *p)
 
     }
 }
+#define UART_SCREEN_X 15
+#define UART_SCREEN_Y 10
 static void pong_draw_screen(pong_gamestate_t *gamestate)
 {
     static divider = 0;
-    if(++divider > 4)
+    if(++divider > 40)
     {
         divider = 0;
-        uint8_t screen_matrix[10][10] = {0};
-        uint32_t pong_screen_x = gamestate->pong_pos_x / 100;    
-        uint32_t pong_screen_y = gamestate->pong_pos_y / 100;
+        uint8_t screen_matrix[UART_SCREEN_X][10] = {0};
+        uint32_t pong_screen_x = gamestate->pong_pos_x * UART_SCREEN_X / 1000;    
+        uint32_t pong_screen_y = gamestate->pong_pos_y * UART_SCREEN_Y / 1000;
         
         screen_matrix[pong_screen_x][pong_screen_y] = 1;
-        printf("\r\n---------------------\r\n");
-        for(int y = 0; y < 10; y++)
+        //printf("\r\n---------------------\r\n");
+        for(int y = 0; y < UART_SCREEN_Y; y++)
         {
-            for(int x = 0; x < 10; x++)
+            bool pixels_present = false;
+            for(int x = 0; x < UART_SCREEN_X; x++)
             {
-                screen_matrix[x][y] == 1 ? printf("X") : printf(" ");
+                if(screen_matrix[x][y] != 0)
+                {
+                    pixels_present = true;
+                    break;
+                }
+            }
+            if(pixels_present)
+            {
+              for(int x = 0; x < UART_SCREEN_X; x++)
+              {
+                  screen_matrix[x][y] == 1 ? printf("X") : printf(" ");
+              }
             }
             printf("\r\n");
                
@@ -674,7 +706,7 @@ static void uart_init(void)
           APP_UART_FLOW_CONTROL_DISABLED,
           false,
 #if defined (UART_PRESENT)
-          UART_BAUDRATE_BAUDRATE_Baud115200
+          UART_BAUDRATE_BAUDRATE_Baud460800
 #else
           NRF_UARTE_BAUDRATE_115200
 #endif
