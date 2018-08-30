@@ -17,7 +17,7 @@ static void reset_game(void)
     m_gamestate.pong_pos_y = LEVEL_SIZE_Y / 2;
     m_gamestate.pong_speed_x = 10;
     m_gamestate.pong_speed_y = 0;
-    for(int i = 0; i < 2; i++)
+    for(int i = 0; i < PONG_NUM_PLAYERS; i++)
     {
         m_gamestate.player[i].paddle_pos_y = LEVEL_SIZE_Y / 2;
         m_gamestate.player[i].score = 0;
@@ -26,6 +26,12 @@ static void reset_game(void)
 
 static void update_game_loop(void *p)
 {
+    // Update paddle positions based on game input
+    for(int i = 0; i < PONG_NUM_PLAYERS; i++)
+    {
+        m_gamestate.player[i].paddle_pos_y = m_global_control_state.player[i].paddle_x;
+    }
+
     // Update pong X position
     m_gamestate.pong_pos_x += m_gamestate.pong_speed_x;
     if(m_gamestate.pong_pos_x > LEVEL_SIZE_X)
@@ -38,6 +44,7 @@ static void update_game_loop(void *p)
         m_gamestate.pong_pos_x = 0;
         m_gamestate.pong_speed_x *= -1;        
     }
+
     // Update pong Y position
     m_gamestate.pong_pos_y += m_gamestate.pong_speed_y;
     if(m_gamestate.pong_pos_y > LEVEL_SIZE_Y)

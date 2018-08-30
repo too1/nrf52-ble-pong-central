@@ -105,6 +105,8 @@ static char const m_target_periph_name[] = "PongThin";             /**< Name of 
 
 static uint8_t m_scan_buffer_data[BLE_GAP_SCAN_BUFFER_MIN]; /**< buffer where advertising reports will be stored by the SoftDevice. */
 
+pong_global_control_state_t m_pong_control_state;
+
 /**@brief Pointer to the buffer where advertising reports will be stored by the SoftDevice. */
 static ble_data_t m_scan_buffer =
 {
@@ -208,14 +210,7 @@ static void thingy_tms_c_evt_handler(ble_thingy_tms_c_t * p_thingy_tms_c, ble_th
             NRF_LOG_INFO("TMS service discovered");
             ble_thingy_tms_c_euler_notif_enable(p_thingy_tms_c);
             break;
-        case BLE_THINGY_TMS_C_EVT_TAP_NOTIFICATION:
-            break;
-        case BLE_THINGY_TMS_C_EVT_RAW_NOTIFICATION:
-            {
-                ble_thingy_tms_raw_t *raw_data = &p_thingy_tms_c_evt->params.raw;
-                NRF_LOG_INFO("gyro %i, %i, %i", raw_data->gyro_x, raw_data->gyro_y, raw_data->gyro_z);
-            }   
-            break;
+
         case BLE_THINGY_TMS_C_EVT_EULER_NOTIFICATION:
             {
                 uint32_t paddle_percentage = 0xFFFF;
@@ -236,16 +231,20 @@ static void thingy_tms_c_evt_handler(ble_thingy_tms_c_t * p_thingy_tms_c, ble_th
                 }
                 else if(euler_roll_degrees < 0) paddle_percentage = 0;
                 else paddle_percentage = 100;
-                if(paddle_percentage != 0xFFFF)NRF_LOG_INFO("Paddle!!%i", paddle_percentage);
+
+                for(int i = 0; i < PONG_NUM_PLAYERS; i++)
+                {
+                    if(&m_thingy_tms_c[i] == p_thingy_tms_c)
+                    {
+                        m_pong_control_state.player[i].paddle_x = paddle_percentage;
+                        break;
+                    }
+                }
+                app_pong_set_global_control_state(&m_pong_control_state);
                 //NRF_LOG_INFO("euler %i, %i, %i", euler_data->roll / 1024 / 1024, euler_data->pitch / 1024 / 1024, euler_data->yaw / 1024 / 1024);
             }   
             break;
-        case BLE_THINGY_TMS_C_EVT_GRAVITY_NOTIFICATION:
-            {
-                ble_thingy_tms_gravity_t *gravity_data = &p_thingy_tms_c_evt->params.gravity;
-                NRF_LOG_INFO("gravity %i", gravity_data->x);
-            }   
-            break;
+
         default:
             break;
     }  
@@ -628,19 +627,25 @@ static void interface_update_timer_callback(void *p)
 static void pong_draw_screen(pong_gamestate_t *gamestate)
 {
     static divider = 0;
-    if(++divider > 40)
+    if(++divider > 5)
     {
         divider = 0;
-        uint8_t screen_matrix[UART_SCREEN_X][10] = {0};
+        uint8_t screen_matrix[UART_SCREEN_X + 2][10] = {0};
         uint32_t pong_screen_x = gamestate->pong_pos_x * UART_SCREEN_X / 1000;    
         uint32_t pong_screen_y = gamestate->pong_pos_y * UART_SCREEN_Y / 1000;
         
-        screen_matrix[pong_screen_x][pong_screen_y] = 1;
+        // Set ball
+        screen_matrix[pong_screen_x + 1][pong_screen_y] = 1;
+        // Set left paddle
+        screen_matrix[0][gamestate->player[0].paddle_pos_y * UART_SCREEN_Y / 101] = 1;
+        // Set right paddle
+        screen_matrix[UART_SCREEN_X + 1][gamestate->player[1].paddle_pos_y * UART_SCREEN_Y / 101] = 1;
+
         //printf("\r\n---------------------\r\n");
         for(int y = 0; y < UART_SCREEN_Y; y++)
         {
             bool pixels_present = false;
-            for(int x = 0; x < UART_SCREEN_X; x++)
+            for(int x = 0; x < (UART_SCREEN_X+2); x++)
             {
                 if(screen_matrix[x][y] != 0)
                 {
@@ -650,7 +655,7 @@ static void pong_draw_screen(pong_gamestate_t *gamestate)
             }
             if(pixels_present)
             {
-              for(int x = 0; x < UART_SCREEN_X; x++)
+              for(int x = 0; x < (UART_SCREEN_X+2); x++)
               {
                   screen_matrix[x][y] == 1 ? printf("X") : printf(" ");
               }
@@ -677,6 +682,10 @@ static void app_pong_event_handler(pong_event_t *evt)
 
 static void pong_init(void)
 {
+    for(int i = 0; i < PONG_NUM_PLAYERS; i++)
+    {
+        m_pong_control_state.player[i].paddle_x = 50;
+    }
     pong_config_t config;
     config.event_handler = app_pong_event_handler;
     app_pong_init(&config);

@@ -6,7 +6,7 @@
 #include "app_timer.h"
 
 #define GAME_LOOP_UPDATE_MS     25
-#define NUM_PLAYERS             2
+#define PONG_NUM_PLAYERS        2
 #define LEVEL_SIZE_X            1000
 #define LEVEL_SIZE_Y            1000
 
@@ -18,7 +18,7 @@ typedef struct
 
 typedef struct
 {
-    pong_player_state_t player[NUM_PLAYERS];
+    pong_player_state_t player[PONG_NUM_PLAYERS];
     
     int32_t pong_pos_x;
     int32_t pong_pos_y;
@@ -33,7 +33,7 @@ typedef struct
 
 typedef struct
 {
-    pong_controller_state_t player[NUM_PLAYERS];
+    pong_controller_state_t player[PONG_NUM_PLAYERS];
 }pong_global_control_state_t;
 
 typedef enum {PONG_EVENT_GAMESTATE_UPDATE}pong_event_type_t;
