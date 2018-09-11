@@ -59,8 +59,8 @@
    <Watchpoint numelements="0" expression="p_evt" evalMode="1" name="p_evt" radix="16" linenumber="298" filename="../../../ble_thingy_client/ble_thingy_tms_c.c" list=""/>
    <Watchpoint numelements="0" expression="p_char" evalMode="0" name="p_char" radix="16" linenumber="335" filename="../../../ble_thingy_client/ble_thingy_tms_c.c" list=""/>
    <Watchpoint numelements="0" expression="p_ble_thingy_tms_c" evalMode="1" name="p_ble_thingy_tms_c" radix="-1" linenumber="564" filename="../../../ble_thingy_client/ble_thingy_tms_c.c" list=""/>
-   <Watchpoint numelements="0" expression="gamestate" evalMode="0" name="gamestate" radix="16" linenumber="608" filename="../../../main.c" list=""/>
-   <Watchpoint numelements="0" expression="pong_screen_x" evalMode="0" name="pong_screen_x" radix="16" linenumber="618" filename="../../../main.c" list=""/>
+   <Watchpoint numelements="0" expression="gamestate" evalMode="0" name="gamestate" radix="16" linenumber="627" filename="../../../main.c" list=""/>
+   <Watchpoint numelements="0" expression="pong_screen_x" evalMode="0" name="pong_screen_x" radix="16" linenumber="643" filename="../../../main.c" list=""/>
   </Watches>
  </Watch1>
  <Watch2>
@@ -73,18 +73,18 @@
   <Watches active="0" update="Never"/>
  </Watch4>
  <Files>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="693" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../main.c" selected="1" top="668" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="734" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../main.c" selected="1" top="691" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="98" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/libraries/util/app_error_weak.c" selected="0" top="73" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="426" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../ble_thingy_client/ble_thingy_uis_c.c" selected="0" top="382" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="309" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../ble_thingy_client/ble_thingy_tms_c.c" selected="0" top="285" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="197" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../ble_thingy_client/ble_thingy_tms_c.h" selected="0" top="162" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="18" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../app_pong.c" selected="0" top="6" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="25" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../app_pong.h" selected="0" top="9" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="29" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../app_pong.c" selected="0" top="6" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="8" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../app_pong.h" selected="0" top="0" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="79" useTextEdit="1" useBinaryEdit="0" left="0" path="../config/sdk_config.h" selected="0" top="44" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="102" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/libraries/uart/retarget.c" selected="0" top="69" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="43" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/ble/ble_db_discovery/ble_db_discovery.c" selected="0" top="16" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="145" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/ble/ble_db_discovery/ble_db_discovery.h" selected="0" top="108" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="58" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/ble/common/ble_gatt_db.h" selected="0" top="42" codecName="Default"/>
  </Files>
- <ARMCrossStudioWindow activeProject="ble_app_multilink_central_pca10040_s132" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Release" debugSearchFileMap="" fileDialogInitialDirectory="C:/Nordic Semiconductor/nRF5_SDK_15.0.0_a53641a/components/libraries/uart" debugSearchPath="" autoConnectCapabilities="3199"/>
+ <ARMCrossStudioWindow activeProject="ble_app_multilink_central_pca10040_s132" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Release" debugSearchFileMap="C:/Nordic Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/drivers/src/nrfx_clock.c&#xa;&#xa;C:/Nordic Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/drivers/src/nrfx_gpiote.c&#xa;&#xa;C:/Nordic Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/mdk/ses_nrf52_Vectors.s&#xa;&#xa;C:/Nordic Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/mdk/ses_nRF_Startup.s&#xa;" fileDialogInitialDirectory="C:/Nordic Semiconductor/nRF5_SDK_15.0.0_a53641a/components/libraries/uart" debugSearchPath="" autoConnectCapabilities="3199"/>
 </session>
