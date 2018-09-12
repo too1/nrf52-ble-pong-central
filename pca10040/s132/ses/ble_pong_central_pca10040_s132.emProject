@@ -126,6 +126,8 @@
     <folder Name="AdafruitDisplay">
       <file file_name="../../../display_driver/drv_led_matrix.c" />
     </folder>
+    <file file_name="../../../app_display.c" />
+    <file file_name="../../../app_display.h" />
   </project>
   <configuration
     Name="Release"

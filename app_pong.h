@@ -7,8 +7,14 @@
 
 #define GAME_LOOP_UPDATE_MS     25
 #define PONG_NUM_PLAYERS        2
+
+#define PADDLE_CONTROLLER_RANGE 100
+
 #define LEVEL_SIZE_X            1000
-#define LEVEL_SIZE_Y            1000
+#define LEVEL_SIZE_Y            500
+#define PADDLE_SIZE_Y           LEVEL_SIZE_Y / 4
+#define PADDLE_HALFSIZE_Y       (PADDLE_SIZE_Y / 2)
+
 
 typedef struct
 {

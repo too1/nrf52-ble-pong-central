@@ -255,15 +255,27 @@ uint32_t drv_led_matrix_draw_pixel(uint8_t x, uint8_t y, uint32_t color)
     {
         mbuff.r[y] |= (1ULL << x);
     }
+    else
+    {
+        mbuff.r[y] &= ~(1ULL << x);
+    }
     if(color_green)
     {
         mbuff.g[y] |= (1ULL << x);
+    }
+    else
+    {
+        mbuff.g[y] &= ~(1ULL << x);
     }
 #ifndef SAVE_CURRENT    
     if(color_blue)
     {
         mbuff.b[y] |= (1ULL << x);
-    }   
+    } 
+    else
+    {
+        mbuff.b[y] &= ~(1ULL << x);
+    }  
 #endif
 
     return NRF_SUCCESS;

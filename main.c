@@ -68,6 +68,7 @@
 #include "nrf_pwr_mgmt.h"
 #include "nrf_delay.h"
 #include "app_pong.h"
+#include "app_display.h"
 
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
@@ -100,6 +101,7 @@ BLE_THINGY_TMS_C_ARRAY_DEF(m_thingy_tms_c, NRF_SDH_BLE_CENTRAL_LINK_COUNT);
 BLE_DB_DISCOVERY_ARRAY_DEF(m_db_disc, NRF_SDH_BLE_CENTRAL_LINK_COUNT);  /**< Database discovery module instances. */
 
 APP_TIMER_DEF(m_app_timer_interface_update);
+APP_TIMER_DEF(m_app_timer_perf_update);
 
 static char const m_target_periph_name[] = "PongThin";             /**< Name of the device we try to connect to. This name is searched for in the scan report data*/
 
@@ -236,7 +238,7 @@ static void thingy_tms_c_evt_handler(ble_thingy_tms_c_t * p_thingy_tms_c, ble_th
                 {
                     if(&m_thingy_tms_c[i] == p_thingy_tms_c)
                     {
-                        m_pong_control_state.player[i].paddle_x = paddle_percentage;
+                        m_pong_control_state.player[i].paddle_x = paddle_percentage * LEVEL_SIZE_Y / 100;
                         break;
                     }
                 }
@@ -626,6 +628,7 @@ static void interface_update_timer_callback(void *p)
 #define UART_SCREEN_Y 10
 static void pong_draw_screen(pong_gamestate_t *gamestate)
 {
+#if 0
     static divider = 0;
     if(++divider > 5)
     {
@@ -664,6 +667,13 @@ static void pong_draw_screen(pong_gamestate_t *gamestate)
                
         }
     }
+#else
+    static uint32_t paddle_counter = 0;
+    //app_display_draw_paddles(paddle_counter, paddle_counter);
+    paddle_counter = (paddle_counter + 1) % 32;
+    app_display_draw_paddles(gamestate->player[0].paddle_pos_y * 32 / LEVEL_SIZE_Y, gamestate->player[1].paddle_pos_y * 32 / LEVEL_SIZE_Y);
+    app_display_draw_ball(gamestate->pong_pos_x * 58 / LEVEL_SIZE_X, gamestate->pong_pos_y * 30 / LEVEL_SIZE_Y);
+#endif       
 }
 
 static void app_pong_event_handler(pong_event_t *evt)
@@ -731,6 +741,31 @@ static void uart_init(void)
     APP_ERROR_CHECK(err_code);   
 }
 
+#define PERF_ENABLE 1
+
+#define PERF_UPDATE_MS  250
+#define PERF_REF_COUNT  284400
+#define PERF_RUN()      NRF_TIMER3->TASKS_COUNT = 1
+
+static void perf_update(void *p)
+{
+    NRF_TIMER3->TASKS_CAPTURE[0] = 1;
+    NRF_LOG_INFO("Perf: %i", (((NRF_TIMER3->CC[0]) * 1000 / PERF_REF_COUNT)));
+    NRF_TIMER3->TASKS_CLEAR = 1;
+}
+
+static void perf_init(void)
+{
+#if (PERF_ENABLE == 1)
+    app_timer_create(&m_app_timer_perf_update, APP_TIMER_MODE_REPEATED, perf_update);
+    app_timer_start(m_app_timer_perf_update, APP_TIMER_TICKS(PERF_UPDATE_MS), 0);
+    
+    NRF_TIMER3->MODE = TIMER_MODE_MODE_Counter << TIMER_MODE_MODE_Pos;
+    NRF_TIMER3->BITMODE = TIMER_BITMODE_BITMODE_32Bit << TIMER_BITMODE_BITMODE_Pos;
+    NRF_TIMER3->TASKS_START = 1;
+#endif
+}
+
 int main(void)
 {
     // Initialize.
@@ -748,6 +783,9 @@ int main(void)
 
     // Start execution.
     NRF_LOG_INFO("Thingy Pong started.");
+    
+    perf_init();   
+    
     scan_start();
     
     app_timer_create(&m_app_timer_interface_update, APP_TIMER_MODE_REPEATED, interface_update_timer_callback);
@@ -757,8 +795,15 @@ int main(void)
 
     app_pong_start_game();
     
+    app_display_init();
+    
     for (;;)
     {
-          idle_state_handle();
+#if (PERF_ENABLE == 1)
+        PERF_RUN();
+        NRF_LOG_PROCESS();
+#else
+        idle_state_handle();
+#endif
     }
 }

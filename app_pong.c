@@ -11,12 +11,17 @@ static pong_global_control_state_t  m_global_control_state;
 static pong_event_t                 m_pong_event;
 
 // "Private" functions
-static void reset_game(void)
+static void reset_ball(void)
 {
     m_gamestate.pong_pos_x = LEVEL_SIZE_X / 2;
     m_gamestate.pong_pos_y = LEVEL_SIZE_Y / 2;
-    m_gamestate.pong_speed_x = 10;
-    m_gamestate.pong_speed_y = 0;
+    m_gamestate.pong_speed_x = 8;
+    m_gamestate.pong_speed_y = 5;    
+}
+
+static void reset_game(void)
+{
+    reset_ball();
     for(int i = 0; i < PONG_NUM_PLAYERS; i++)
     {
         m_gamestate.player[i].paddle_pos_y = LEVEL_SIZE_Y / 2;
@@ -34,15 +39,35 @@ static void update_game_loop(void *p)
 
     // Update pong X position
     m_gamestate.pong_pos_x += m_gamestate.pong_speed_x;
+    
+    // Check if the ball has reached one of the board edges
     if(m_gamestate.pong_pos_x > LEVEL_SIZE_X)
     {
-        m_gamestate.pong_pos_x = LEVEL_SIZE_X;
-        m_gamestate.pong_speed_x *= -1;
+        // Right edge hit. Check if paddle is in position
+        if(m_gamestate.pong_pos_y > (m_gamestate.player[1].paddle_pos_y - PADDLE_HALFSIZE_Y) && 
+           m_gamestate.pong_pos_y < (m_gamestate.player[1].paddle_pos_y + PADDLE_HALFSIZE_Y))
+        {
+            m_gamestate.pong_pos_x = LEVEL_SIZE_X;
+            m_gamestate.pong_speed_x *= -1;
+        }
+        else
+        {
+            reset_ball();
+        }
     }
     else if(m_gamestate.pong_pos_x < 0)
     {
-        m_gamestate.pong_pos_x = 0;
-        m_gamestate.pong_speed_x *= -1;        
+        // Left edge hit. Check if the paddle is in position
+        if(m_gamestate.pong_pos_y > (m_gamestate.player[0].paddle_pos_y - PADDLE_HALFSIZE_Y) && 
+           m_gamestate.pong_pos_y < (m_gamestate.player[0].paddle_pos_y + PADDLE_HALFSIZE_Y))
+        {
+            m_gamestate.pong_pos_x = 0;
+            m_gamestate.pong_speed_x *= -1;
+        }
+        else
+        {
+            reset_ball();
+        }     
     }
 
     // Update pong Y position
