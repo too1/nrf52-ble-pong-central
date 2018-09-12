@@ -192,6 +192,7 @@ static void thingy_uis_c_evt_handler(ble_thingy_uis_c_t * p_thingy_uis_c, ble_th
     {
         case BLE_LBS_C_EVT_DISCOVERY_COMPLETE:
             ble_thingy_uis_c_button_notif_enable(p_thingy_uis_c);
+            ble_thingy_uis_led_set_constant(p_thingy_uis_c, 0, 255, 255);
             break; // BLE_LBS_C_EVT_DISCOVERY_COMPLETE
 
         case BLE_LBS_C_EVT_BUTTON_NOTIFICATION:
@@ -211,6 +212,7 @@ static void thingy_tms_c_evt_handler(ble_thingy_tms_c_t * p_thingy_tms_c, ble_th
         case BLE_THINGY_TMS_C_EVT_DISCOVERY_COMPLETE:
             NRF_LOG_INFO("TMS service discovered");
             ble_thingy_tms_c_euler_notif_enable(p_thingy_tms_c);
+            app_pong_controller_status_change(p_thingy_tms_c->conn_handle, CONSTATE_ACTIVE);
             break;
 
         case BLE_THINGY_TMS_C_EVT_EULER_NOTIFICATION:
@@ -333,6 +335,8 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
                 bsp_board_led_on(CENTRAL_SCANNING_LED);
                 scan_start();
             }
+            
+            app_pong_controller_status_change(p_gap_evt->conn_handle, CONSTATE_CONNECTED);
         } break; // BLE_GAP_EVT_CONNECTED
 
         // Upon disconnection, reset the connection handle of the peer which disconnected, update
@@ -357,7 +361,8 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 
             // Turn on LED for indicating scanning
             bsp_board_led_on(CENTRAL_SCANNING_LED);
-
+            
+            app_pong_controller_status_change(p_gap_evt->conn_handle, CONSTATE_DISCONNECTED);
         } break;
 
         case BLE_GAP_EVT_ADV_REPORT:
@@ -616,14 +621,9 @@ static void gatt_init(void)
 
 static void interface_update_timer_callback(void *p)
 {
-    for(int i = 0; i < 1; i++)
-    {
-        ble_thingy_uis_led_set_constant(&m_thingy_uis_c[i], 0, 255, 255);
-        //ble_thingy_tms_c_raw_notif_enable(&m_thingy_tms_c[i]);
-        
 
-    }
 }
+
 #define UART_SCREEN_X 15
 #define UART_SCREEN_Y 10
 static void pong_draw_screen(pong_gamestate_t *gamestate)
@@ -668,11 +668,7 @@ static void pong_draw_screen(pong_gamestate_t *gamestate)
         }
     }
 #else
-    static uint32_t paddle_counter = 0;
-    //app_display_draw_paddles(paddle_counter, paddle_counter);
-    paddle_counter = (paddle_counter + 1) % 32;
-    app_display_draw_paddles(gamestate->player[0].paddle_pos_y * 32 / LEVEL_SIZE_Y, gamestate->player[1].paddle_pos_y * 32 / LEVEL_SIZE_Y);
-    app_display_draw_ball(gamestate->pong_pos_x * 58 / LEVEL_SIZE_X, gamestate->pong_pos_y * 30 / LEVEL_SIZE_Y);
+    app_pong_draw_display();
 #endif       
 }
 
@@ -685,6 +681,14 @@ static void app_pong_event_handler(pong_event_t *evt)
             //NRF_LOG_INFO("x: %i, y: %i", evt->game_state->pong_pos_x, evt->game_state->pong_pos_y);
             break;
             
+        case PONG_EVENT_CON_SET_COLOR:
+            if(evt->params.con_set_color.conn_handle < PONG_NUM_PLAYERS)
+            {
+                uint32_t color = evt->params.con_set_color.color;
+                NRF_LOG_INFO("Setting color %x", color);
+                ble_thingy_uis_led_set_constant(&m_thingy_uis_c[evt->params.con_set_color.conn_handle], color >> 16, (color >> 8) & 0xFF, color & 0xFF);
+            }
+            break;
         default:
             break;
     }
@@ -741,7 +745,7 @@ static void uart_init(void)
     APP_ERROR_CHECK(err_code);   
 }
 
-#define PERF_ENABLE 1
+#define PERF_ENABLE 0
 
 #define PERF_UPDATE_MS  250
 #define PERF_REF_COUNT  284400
