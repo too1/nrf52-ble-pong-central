@@ -15,12 +15,53 @@ static uint32_t state_lifetime = 0;
 static pong_event_t                 m_pong_event;
 
 // "Private" functions
+static void set_main_state(uint32_t new_state)
+{
+    app_display_clear_screen();
+    switch(new_state)
+    {
+        case STATE_GAME_START_PREDELAY:
+            app_display_score_state(&m_gamestate);
+            break;
+            
+        case STATE_GAME_RUNNING:
+            app_display_score_state(&m_gamestate);
+            break;
+            
+        case STATE_GAME_SCORE_LIMIT_REACHED:
+            app_display_draw_text("GAME OVER", 32, 2, CL_YELLOW, ALIGNMENT_CENTRE);
+            app_display_score_state(&m_gamestate);
+            break;
+    }
+    m_main_state = new_state;
+    state_lifetime = 0;
+}
+
 static void reset_ball(void)
 {
+    uint32_t winning_player = 0xFFFF;
     m_gamestate.pong_pos_x = LEVEL_SIZE_X / 2;
     m_gamestate.pong_pos_y = LEVEL_SIZE_Y / 2;
     m_gamestate.pong_speed_x = 8;
-    m_gamestate.pong_speed_y = 5;    
+    m_gamestate.pong_speed_y = 5;  
+    m_gamestate.time_since_last_speed_increment = 0;
+    m_gamestate.speed_multiplier_factor = 0;
+    
+    for(int i = 0; i < PONG_NUM_PLAYERS; i++)
+    {
+       if(m_gamestate.player[i].score >= PONG_SCORE_LIMIT)
+       {
+           winning_player = i;
+       }
+    }
+    if(winning_player == 0xFFFF)
+    {
+       set_main_state(STATE_GAME_START_PREDELAY);
+    }
+    else 
+    {
+       set_main_state(STATE_GAME_SCORE_LIMIT_REACHED);
+    }
 }
 
 static void reset_game(void)
@@ -33,49 +74,66 @@ static void reset_game(void)
     }    
 }
 
+static bool check_paddle_y_intersect(uint32_t y, uint32_t paddle_y)
+{
+    if(paddle_y < PADDLE_HALFSIZE_Y)
+    {
+        return (y < (paddle_y + PADDLE_HALFSIZE_Y));
+    }
+    else if(paddle_y > (LEVEL_SIZE_Y - PADDLE_HALFSIZE_Y))
+    {
+        return (y > (paddle_y - PADDLE_HALFSIZE_Y));
+    }
+    else
+    {
+        return (y > (paddle_y - PADDLE_HALFSIZE_Y) && y < (paddle_y + PADDLE_HALFSIZE_Y));
+    }
+}
+
+static int32_t scale_speed(int32_t speed)
+{
+    return speed * (4 + (int32_t)m_gamestate.speed_multiplier_factor) / 4;
+}
+
 static void update_game_running(void)
 {
-     // Update paddle positions based on game input
-    for(int i = 0; i < PONG_NUM_PLAYERS; i++)
-    {
-        m_gamestate.player[i].paddle_pos_y = m_global_control_state.player[i].paddle_x;
-    }
-
     // Update pong X position
-    m_gamestate.pong_pos_x += m_gamestate.pong_speed_x;
+    m_gamestate.pong_pos_x += scale_speed(m_gamestate.pong_speed_x);
     
     // Check if the ball has reached one of the board edges
     if(m_gamestate.pong_pos_x > LEVEL_SIZE_X)
     {
         // Right edge hit. Check if paddle is in position
-        if(m_gamestate.pong_pos_y > (m_gamestate.player[1].paddle_pos_y - PADDLE_HALFSIZE_Y) && 
-           m_gamestate.pong_pos_y < (m_gamestate.player[1].paddle_pos_y + PADDLE_HALFSIZE_Y))
+        if(check_paddle_y_intersect(m_gamestate.pong_pos_y, m_gamestate.player[1].paddle_pos_y))
         {
             m_gamestate.pong_pos_x = LEVEL_SIZE_X;
             m_gamestate.pong_speed_x *= -1;
         }
         else
         {
+            // The ball missed. Increment score and reset ball
+            m_gamestate.player[0].score++;
             reset_ball();
         }
     }
     else if(m_gamestate.pong_pos_x < 0)
     {
         // Left edge hit. Check if the paddle is in position
-        if(m_gamestate.pong_pos_y > (m_gamestate.player[0].paddle_pos_y - PADDLE_HALFSIZE_Y) && 
-           m_gamestate.pong_pos_y < (m_gamestate.player[0].paddle_pos_y + PADDLE_HALFSIZE_Y))
+        if(check_paddle_y_intersect(m_gamestate.pong_pos_y, m_gamestate.player[0].paddle_pos_y))
         {
             m_gamestate.pong_pos_x = 0;
             m_gamestate.pong_speed_x *= -1;
         }
         else
         {
+            // The ball missed. Increment score and reset ball
+            m_gamestate.player[1].score++;
             reset_ball();
         }     
     }
 
     // Update pong Y position
-    m_gamestate.pong_pos_y += m_gamestate.pong_speed_y;
+    m_gamestate.pong_pos_y += scale_speed(m_gamestate.pong_speed_y);
     if(m_gamestate.pong_pos_y > LEVEL_SIZE_Y)
     {
         m_gamestate.pong_pos_y = LEVEL_SIZE_Y;
@@ -85,14 +143,35 @@ static void update_game_running(void)
     {
         m_gamestate.pong_pos_y = 0;
         m_gamestate.pong_speed_y *= -1;        
-    }   
+    } 
+  
+    // Update speed multiplier
+    m_gamestate.time_since_last_speed_increment++;
+    if(m_gamestate.time_since_last_speed_increment > (PONG_SPEED_INC_INTERVAL * GAME_LOOP_UPDATE_FREQ))
+    {
+        m_gamestate.time_since_last_speed_increment = 0;
+        m_gamestate.speed_multiplier_factor++;
+    }
 }
 
 static void update_game_loop(void *p)
 {
+    // Update paddle positions based on game input, independent of state
+    for(int i = 0; i < PONG_NUM_PLAYERS; i++)
+    {
+        m_gamestate.player[i].paddle_pos_y = m_global_control_state.player[i].paddle_x;
+    }
+    
     switch(m_main_state)
     {
         case STATE_WAITING_FOR_PLAYERS:
+            break;
+            
+        case STATE_GAME_START_PREDELAY:
+            if(state_lifetime > (PONG_PREDELAY_TIME_S * GAME_LOOP_UPDATE_FREQ))
+            {
+                set_main_state(STATE_GAME_RUNNING);
+            }
             break;
             
         case STATE_GAME_RUNNING:
@@ -104,12 +183,6 @@ static void update_game_loop(void *p)
     m_pong_event.evt_type = PONG_EVENT_GAMESTATE_UPDATE;
     m_pong_event.game_state = &m_gamestate;
     m_event_callback(&m_pong_event);
-}
-
-static void set_main_state(uint32_t new_state)
-{
-    m_main_state = new_state;
-    state_lifetime = 0;
 }
 
 // "Public" functions
@@ -199,7 +272,7 @@ void app_pong_controller_status_change(uint16_t conn_handle, controller_state_t 
             if(m_gamestate.player[0].connected_state == CONSTATE_ACTIVE && 
                m_gamestate.player[1].connected_state == CONSTATE_ACTIVE)
             {
-                set_main_state(STATE_GAME_RUNNING);
+                set_main_state(STATE_GAME_START_PREDELAY);
             }
             break;
     }
@@ -223,12 +296,26 @@ void app_pong_draw_display(void)
             paddle2_color = (m_gamestate.player[1].connected_state == CONSTATE_DISCONNECTED) ? CL_RED : m_gamestate.player[1].color;
             if(m_gamestate.player[1].connected_state != CONSTATE_ACTIVE && blink_fast) paddle2_color = CL_BLACK;
             app_display_draw_paddles(16, 16, paddle1_color, paddle2_color);
+            app_display_draw_text("Waiting", 32, 2, CL_WHITE, ALIGNMENT_CENTRE);
+            app_display_draw_text("for", 32, 10, CL_WHITE, ALIGNMENT_CENTRE);
+            app_display_draw_text("players", 32, 18, CL_WHITE, ALIGNMENT_CENTRE);
+            break;
+            
+        case STATE_GAME_START_PREDELAY:
+            app_display_draw_text("Starting in..", 32, 2, CL_WHITE, ALIGNMENT_CENTRE);
+            app_display_draw_square(20, 10, 20, 20, CL_BLACK);
+            app_display_draw_int(PONG_PREDELAY_TIME_S - (state_lifetime / GAME_LOOP_UPDATE_FREQ), 32, 14, CL_WHITE, ALIGNMENT_CENTRE);
+            app_display_draw_paddles(m_gamestate.player[0].paddle_pos_y * 32 / LEVEL_SIZE_Y, m_gamestate.player[1].paddle_pos_y * 32 / LEVEL_SIZE_Y,
+                                     m_gamestate.player[0].color, m_gamestate.player[1].color);
             break;
             
         case STATE_GAME_RUNNING:
             app_display_draw_paddles(m_gamestate.player[0].paddle_pos_y * 32 / LEVEL_SIZE_Y, m_gamestate.player[1].paddle_pos_y * 32 / LEVEL_SIZE_Y,
-                                     CL_BLUE, CL_GREEN);
+                                     m_gamestate.player[0].color, m_gamestate.player[1].color);
             app_display_draw_ball(m_gamestate.pong_pos_x * 59 / LEVEL_SIZE_X, m_gamestate.pong_pos_y * 30 / LEVEL_SIZE_Y);
+            break;
+            
+        case STATE_GAME_SCORE_LIMIT_REACHED:
             break;
     }
     state_lifetime++;

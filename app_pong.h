@@ -6,6 +6,7 @@
 #include "app_timer.h"
 
 #define GAME_LOOP_UPDATE_MS     25
+#define GAME_LOOP_UPDATE_FREQ   (1000 / GAME_LOOP_UPDATE_MS)
 #define PONG_NUM_PLAYERS        2
 
 #define PADDLE_CONTROLLER_RANGE 100
@@ -15,13 +16,19 @@
 #define PADDLE_SIZE_Y           LEVEL_SIZE_Y / 4
 #define PADDLE_HALFSIZE_Y       (PADDLE_SIZE_Y / 2)
 
+#define PONG_PREDELAY_TIME_S    5
+#define PONG_SCORE_LIMIT        5
+#define PONG_SPEED_INC_INTERVAL 10
+
 typedef enum {CONSTATE_DISCONNECTED,    // Thingy disconnected
               CONSTATE_CONNECTED,       // Thingy connected, services disabled
               CONSTATE_ACTIVE           // Thingy connected and services enabled
              }controller_state_t;
   
-typedef enum {STATE_WAITING_FOR_PLAYERS, 
+typedef enum {STATE_WAITING_FOR_PLAYERS,
+              STATE_GAME_START_PREDELAY,
               STATE_GAME_RUNNING,
+              STATE_GAME_SCORE_LIMIT_REACHED,
       
              }pong_main_state_t;
 
@@ -42,6 +49,8 @@ typedef struct
     int32_t pong_pos_y;
     int32_t pong_speed_x;
     int32_t pong_speed_y;
+    uint32_t time_since_last_speed_increment;
+    uint32_t speed_multiplier_factor;
 }pong_gamestate_t;
 
 typedef struct
