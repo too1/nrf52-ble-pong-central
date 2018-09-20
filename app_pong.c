@@ -3,6 +3,8 @@
 
 APP_TIMER_DEF(m_game_loop_timer_id);
 
+#define STATE_MASK_CLEAR_SCREEN (0xFFFFFFFF & ~(1 << STATE_GAME_START_PREDELAY))
+
 static bool                         m_game_initialized = false;
 static pong_callback_t              m_event_callback;
 
@@ -13,19 +15,40 @@ static pong_main_state_t            m_main_state = STATE_WAITING_FOR_PLAYERS;
 static uint32_t state_lifetime = 0;
 
 static pong_event_t                 m_pong_event;
+static bool                         m_graphics_invalidate = true;
+
+static void reset_game(void);
+static void reset_ball(void);
 
 // "Private" functions
+static void reset_player_button_pressed_state(void)
+{
+    for(int i = 0; i < PONG_NUM_PLAYERS; i++)
+    {
+        m_global_control_state.player[i].button_pressed = false;
+    }
+}
+
 static void set_main_state(uint32_t new_state)
 {
-    app_display_clear_screen();
+    reset_player_button_pressed_state();
+    if((1 << new_state) & STATE_MASK_CLEAR_SCREEN)
+    {
+        app_display_clear_screen();
+    }
+    m_graphics_invalidate = true;
     switch(new_state)
     {
+        case STATE_GAME_START_NEW_GAME:
+            reset_game();
+            break;
+            
         case STATE_GAME_START_PREDELAY:
+            app_display_draw_square(4, 0, 56, 32, CL_BLACK);
             app_display_score_state(&m_gamestate);
             break;
             
         case STATE_GAME_RUNNING:
-            app_display_score_state(&m_gamestate);
             break;
             
         case STATE_GAME_SCORE_LIMIT_REACHED:
@@ -66,12 +89,12 @@ static void reset_ball(void)
 
 static void reset_game(void)
 {
-    reset_ball();
     for(int i = 0; i < PONG_NUM_PLAYERS; i++)
     {
         m_gamestate.player[i].paddle_pos_y = LEVEL_SIZE_Y / 2;
         m_gamestate.player[i].score = 0;
     }    
+    reset_ball();
 }
 
 static bool check_paddle_y_intersect(uint32_t y, uint32_t paddle_y)
@@ -157,14 +180,19 @@ static void update_game_running(void)
 static void update_game_loop(void *p)
 {
     // Update paddle positions based on game input, independent of state
-    for(int i = 0; i < PONG_NUM_PLAYERS; i++)
-    {
-        m_gamestate.player[i].paddle_pos_y = m_global_control_state.player[i].paddle_x;
-    }
+    if(m_main_state != STATE_GAME_START_PREDELAY || state_lifetime > (GAME_LOOP_UPDATE_FREQ))
+        for(int i = 0; i < PONG_NUM_PLAYERS; i++)
+        {
+            m_gamestate.player[i].paddle_pos_y = m_global_control_state.player[i].paddle_x;
+        }
     
     switch(m_main_state)
     {
         case STATE_WAITING_FOR_PLAYERS:
+            break;
+            
+        case STATE_GAME_START_NEW_GAME:
+            set_main_state(STATE_GAME_START_PREDELAY);
             break;
             
         case STATE_GAME_START_PREDELAY:
@@ -176,6 +204,14 @@ static void update_game_loop(void *p)
             
         case STATE_GAME_RUNNING:
             update_game_running();
+            break;
+            
+        case STATE_GAME_SCORE_LIMIT_REACHED:
+            // If both players press the button, start a new game
+            if(m_global_control_state.player[0].button_pressed && m_global_control_state.player[1].button_pressed)
+            {
+                set_main_state(STATE_GAME_START_NEW_GAME);
+            }
             break;
     }
 
@@ -196,7 +232,7 @@ uint32_t app_pong_init(pong_config_t *config)
     m_gamestate.player[0].connected_state = CONSTATE_DISCONNECTED;
     m_gamestate.player[1].connected_state = CONSTATE_DISCONNECTED;
     m_gamestate.player[0].color = CL_TEAL;
-    m_gamestate.player[1].color = CL_YELLOW;
+    m_gamestate.player[1].color = CL_BLUE;
     m_main_state = STATE_WAITING_FOR_PLAYERS;
     return 0;
 }
@@ -208,9 +244,9 @@ uint32_t app_pong_start_game(void)
     return 0;
 }
 
-void app_pong_set_global_control_state(pong_global_control_state_t *control_state)
+pong_controller_state_t *app_pong_get_controller(uint32_t index)
 {
-    m_global_control_state = *control_state;
+    return &m_global_control_state.player[index];
 }
 
 void app_pong_controller_status_change(uint16_t conn_handle, controller_state_t state)
@@ -230,7 +266,7 @@ void app_pong_controller_status_change(uint16_t conn_handle, controller_state_t 
             }
            
             // Stop the game if running
-            if(m_main_state == STATE_GAME_RUNNING)
+            if(m_main_state != STATE_WAITING_FOR_PLAYERS)
             {
                 set_main_state(STATE_WAITING_FOR_PLAYERS);
             }
@@ -272,7 +308,7 @@ void app_pong_controller_status_change(uint16_t conn_handle, controller_state_t 
             if(m_gamestate.player[0].connected_state == CONSTATE_ACTIVE && 
                m_gamestate.player[1].connected_state == CONSTATE_ACTIVE)
             {
-                set_main_state(STATE_GAME_START_PREDELAY);
+                set_main_state(STATE_GAME_START_NEW_GAME);
             }
             break;
     }
@@ -295,23 +331,24 @@ void app_pong_draw_display(void)
             if(m_gamestate.player[0].connected_state != CONSTATE_ACTIVE && blink_fast) paddle1_color = CL_BLACK;
             paddle2_color = (m_gamestate.player[1].connected_state == CONSTATE_DISCONNECTED) ? CL_RED : m_gamestate.player[1].color;
             if(m_gamestate.player[1].connected_state != CONSTATE_ACTIVE && blink_fast) paddle2_color = CL_BLACK;
-            app_display_draw_paddles(16, 16, paddle1_color, paddle2_color);
-            app_display_draw_text("Waiting", 32, 2, CL_WHITE, ALIGNMENT_CENTRE);
-            app_display_draw_text("for", 32, 10, CL_WHITE, ALIGNMENT_CENTRE);
-            app_display_draw_text("players", 32, 18, CL_WHITE, ALIGNMENT_CENTRE);
+            app_display_draw_paddles(16, 16, paddle1_color, paddle2_color, m_graphics_invalidate);
+            app_display_draw_text("Waiting", 32, 2, CL_BLUE, ALIGNMENT_CENTRE);
+            app_display_draw_text("for", 32, 11, CL_BLUE, ALIGNMENT_CENTRE);
+            app_display_draw_text("players", 32, 20, CL_BLUE, ALIGNMENT_CENTRE);
             break;
             
         case STATE_GAME_START_PREDELAY:
-            app_display_draw_text("Starting in..", 32, 2, CL_WHITE, ALIGNMENT_CENTRE);
-            app_display_draw_square(20, 10, 20, 20, CL_BLACK);
+            app_display_draw_text("Get ready", 32, 2, CL_WHITE, ALIGNMENT_CENTRE);
+            app_display_draw_square(20, 12, 20, 20, CL_BLACK);
             app_display_draw_int(PONG_PREDELAY_TIME_S - (state_lifetime / GAME_LOOP_UPDATE_FREQ), 32, 14, CL_WHITE, ALIGNMENT_CENTRE);
             app_display_draw_paddles(m_gamestate.player[0].paddle_pos_y * 32 / LEVEL_SIZE_Y, m_gamestate.player[1].paddle_pos_y * 32 / LEVEL_SIZE_Y,
-                                     m_gamestate.player[0].color, m_gamestate.player[1].color);
+                                     m_gamestate.player[0].color, m_gamestate.player[1].color, m_graphics_invalidate);
             break;
             
         case STATE_GAME_RUNNING:
             app_display_draw_paddles(m_gamestate.player[0].paddle_pos_y * 32 / LEVEL_SIZE_Y, m_gamestate.player[1].paddle_pos_y * 32 / LEVEL_SIZE_Y,
-                                     m_gamestate.player[0].color, m_gamestate.player[1].color);
+                                     m_gamestate.player[0].color, m_gamestate.player[1].color, m_graphics_invalidate);
+            app_display_score_state(&m_gamestate);
             app_display_draw_ball(m_gamestate.pong_pos_x * 59 / LEVEL_SIZE_X, m_gamestate.pong_pos_y * 30 / LEVEL_SIZE_Y);
             break;
             
@@ -319,4 +356,5 @@ void app_pong_draw_display(void)
             break;
     }
     state_lifetime++;
+    m_graphics_invalidate = false;
 }

@@ -26,6 +26,7 @@ typedef enum {CONSTATE_DISCONNECTED,    // Thingy disconnected
              }controller_state_t;
   
 typedef enum {STATE_WAITING_FOR_PLAYERS,
+              STATE_GAME_START_NEW_GAME,
               STATE_GAME_START_PREDELAY,
               STATE_GAME_RUNNING,
               STATE_GAME_SCORE_LIMIT_REACHED,
@@ -56,6 +57,7 @@ typedef struct
 typedef struct
 {
     uint32_t paddle_x;
+    bool     button_pressed;
 }pong_controller_state_t;
 
 typedef struct
@@ -92,7 +94,7 @@ uint32_t app_pong_init(pong_config_t *config);
 
 uint32_t app_pong_start_game(void);
 
-void app_pong_set_global_control_state(pong_global_control_state_t *control_state);
+pong_controller_state_t *app_pong_get_controller(uint32_t index);
 
 void app_pong_controller_status_change(uint16_t conn_handle, controller_state_t state);
 

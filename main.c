@@ -107,8 +107,6 @@ static char const m_target_periph_name[] = "PongThin";             /**< Name of 
 
 static uint8_t m_scan_buffer_data[BLE_GAP_SCAN_BUFFER_MIN]; /**< buffer where advertising reports will be stored by the SoftDevice. */
 
-pong_global_control_state_t m_pong_control_state;
-
 /**@brief Pointer to the buffer where advertising reports will be stored by the SoftDevice. */
 static ble_data_t m_scan_buffer =
 {
@@ -197,6 +195,15 @@ static void thingy_uis_c_evt_handler(ble_thingy_uis_c_t * p_thingy_uis_c, ble_th
 
         case BLE_LBS_C_EVT_BUTTON_NOTIFICATION:
             NRF_LOG_INFO("Button pressed");
+            for(int i = 0; i < PONG_NUM_PLAYERS; i++)
+            {
+                if(&m_thingy_uis_c[i] == p_thingy_uis_c)
+                {
+                    app_pong_get_controller(i)->button_pressed = true;
+                    break;
+                }
+            }
+            //app_pong_set_global_control_state(&m_pong_control_state);
             break; // BLE_LBS_C_EVT_BUTTON_NOTIFICATION   */
 
         default:
@@ -240,11 +247,11 @@ static void thingy_tms_c_evt_handler(ble_thingy_tms_c_t * p_thingy_tms_c, ble_th
                 {
                     if(&m_thingy_tms_c[i] == p_thingy_tms_c)
                     {
-                        m_pong_control_state.player[i].paddle_x = paddle_percentage * LEVEL_SIZE_Y / 100;
+                        app_pong_get_controller(i)->paddle_x = paddle_percentage * LEVEL_SIZE_Y / 100;
                         break;
                     }
                 }
-                app_pong_set_global_control_state(&m_pong_control_state);
+                //app_pong_set_global_control_state(&m_pong_control_state);
                 //NRF_LOG_INFO("euler %i, %i, %i", euler_data->roll / 1024 / 1024, euler_data->pitch / 1024 / 1024, euler_data->yaw / 1024 / 1024);
             }   
             break;
@@ -698,7 +705,7 @@ static void pong_init(void)
 {
     for(int i = 0; i < PONG_NUM_PLAYERS; i++)
     {
-        m_pong_control_state.player[i].paddle_x = 50;
+        app_pong_get_controller(i)->paddle_x = 50;
     }
     pong_config_t config;
     config.event_handler = app_pong_event_handler;

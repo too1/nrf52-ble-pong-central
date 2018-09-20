@@ -21,7 +21,7 @@ typedef enum {ALIGNMENT_LEFT, ALIGNMENT_CENTRE} text_alignment_t;
 
 void app_display_init(void);
 
-void app_display_draw_paddles(uint32_t p1_pos, uint32_t p2_pos, uint32_t p1_color, uint32_t p2_color);
+void app_display_draw_paddles(uint32_t p1_pos, uint32_t p2_pos, uint32_t p1_color, uint32_t p2_color, bool invalidate);
 
 void app_display_draw_ball(uint32_t pos_x, uint32_t pos_y);
 
