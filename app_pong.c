@@ -1,6 +1,10 @@
 #include "app_pong.h"
 #include "app_display.h"
 
+#include "nrf_log.h"
+#include "nrf_log_ctrl.h"
+#include "nrf_log_default_backends.h"
+
 APP_TIMER_DEF(m_game_loop_timer_id);
 
 #define STATE_MASK_CLEAR_SCREEN (0xFFFFFFFF & ~(1 << STATE_GAME_START_PREDELAY))
@@ -65,9 +69,18 @@ static void reset_ball(void)
     uint32_t winning_player = 0xFFFF;
     m_gamestate.pong_pos_x = LEVEL_SIZE_X / 2;
     m_gamestate.pong_pos_y = LEVEL_SIZE_Y / 2;
-    m_gamestate.pong_speed_x = 8;
-    m_gamestate.pong_speed_y = 5;  
+    m_gamestate.pong_speed_x = PONG_BALL_START_SPEED_X;
+    m_gamestate.pong_speed_y = PONG_BALL_START_SPEED_Y;  
     m_gamestate.time_since_last_speed_increment = 0;
+    NRF_LOG_INFO("Speed multiplier taken down from %i to %i", m_gamestate.speed_multiplier_factor, m_gamestate.speed_multiplier_factor - 2);
+    if(m_gamestate.speed_multiplier_factor > PONG_SPEED_REDUCTION_PR_BALL)
+    {
+        m_gamestate.speed_multiplier_factor -= PONG_SPEED_REDUCTION_PR_BALL;
+    }
+    else
+    {
+        m_gamestate.speed_multiplier_factor = 0;
+    }
     m_gamestate.speed_multiplier_factor = 0;
     
     for(int i = 0; i < PONG_NUM_PLAYERS; i++)
@@ -99,18 +112,23 @@ static void reset_game(void)
 
 static bool check_paddle_y_intersect(uint32_t y, uint32_t paddle_y)
 {
+    bool return_val;
+    uint32_t paddle_upper = paddle_y + PADDLE_HALFSIZE_Y;
+    uint32_t paddle_lower = (paddle_y > PADDLE_HALFSIZE_Y) ? paddle_y - PADDLE_HALFSIZE_Y : 0;
     if(paddle_y < PADDLE_HALFSIZE_Y)
     {
-        return (y < (paddle_y + PADDLE_HALFSIZE_Y));
+        return_val = (y < paddle_upper);
     }
     else if(paddle_y > (LEVEL_SIZE_Y - PADDLE_HALFSIZE_Y))
     {
-        return (y > (paddle_y - PADDLE_HALFSIZE_Y));
+        return_val = (y > paddle_lower);
     }
     else
     {
-        return (y > (paddle_y - PADDLE_HALFSIZE_Y) && y < (paddle_y + PADDLE_HALFSIZE_Y));
+        return_val = (y > paddle_lower && y < paddle_upper);
     }
+    NRF_LOG_INFO("%s Ball y: %i, paddle y: %i (%i-%i)", return_val ? "Hit!" : "Miss", y, paddle_y, paddle_lower, paddle_upper);
+    return return_val;
 }
 
 static int32_t scale_speed(int32_t speed)
@@ -131,6 +149,8 @@ static void update_game_running(void)
         {
             m_gamestate.pong_pos_x = LEVEL_SIZE_X;
             m_gamestate.pong_speed_x *= -1;
+            m_gamestate.pong_speed_y_boost = m_gamestate.player[1].paddle_pos_y_delta * PONG_PADDLE_SPEED_TO_BALL_RATIO / 100;
+            NRF_LOG_INFO("PSpeed: %i, Ball speed: %i", m_gamestate.player[1].paddle_pos_y_delta, m_gamestate.pong_speed_y);
         }
         else
         {
@@ -146,6 +166,8 @@ static void update_game_running(void)
         {
             m_gamestate.pong_pos_x = 0;
             m_gamestate.pong_speed_x *= -1;
+            m_gamestate.pong_speed_y_boost = m_gamestate.player[0].paddle_pos_y_delta * PONG_PADDLE_SPEED_TO_BALL_RATIO / 100;
+            NRF_LOG_INFO("PSpeed: %i, Ball speed: %i", m_gamestate.player[0].paddle_pos_y_delta, m_gamestate.pong_speed_y);
         }
         else
         {
@@ -156,18 +178,29 @@ static void update_game_running(void)
     }
 
     // Update pong Y position
-    m_gamestate.pong_pos_y += scale_speed(m_gamestate.pong_speed_y);
+    m_gamestate.pong_pos_y += scale_speed(m_gamestate.pong_speed_y) + m_gamestate.pong_speed_y_boost;
     if(m_gamestate.pong_pos_y > LEVEL_SIZE_Y)
     {
         m_gamestate.pong_pos_y = LEVEL_SIZE_Y;
         m_gamestate.pong_speed_y *= -1;
+        m_gamestate.pong_speed_y_boost *= -1;
     }
     else if(m_gamestate.pong_pos_y < 0)
     {
         m_gamestate.pong_pos_y = 0;
-        m_gamestate.pong_speed_y *= -1;        
+        m_gamestate.pong_speed_y *= -1;  
+        m_gamestate.pong_speed_y_boost *= -1;      
     } 
-  
+    
+    // If the ball Y speed is larger than default, reduce it slowly towards the default
+    static uint32_t pong_speed_y_speed_red_divider = 0;
+    if(++pong_speed_y_speed_red_divider > PONG_BALL_Y_SPEED_RED_DIVIDER)
+    {
+        pong_speed_y_speed_red_divider = 0;
+        if((m_gamestate.pong_speed_y + m_gamestate.pong_speed_y_boost) > PONG_BALL_START_SPEED_Y) m_gamestate.pong_speed_y_boost--;
+        else if((m_gamestate.pong_speed_y + m_gamestate.pong_speed_y_boost) < -PONG_BALL_START_SPEED_Y) m_gamestate.pong_speed_y_boost++;
+        NRF_LOG_INFO("ball speed w/boost y: %i", m_gamestate.pong_speed_y + m_gamestate.pong_speed_y_boost);
+    }
     // Update speed multiplier
     m_gamestate.time_since_last_speed_increment++;
     if(m_gamestate.time_since_last_speed_increment > (PONG_SPEED_INC_INTERVAL * GAME_LOOP_UPDATE_FREQ))
@@ -184,6 +217,7 @@ static void update_game_loop(void *p)
         for(int i = 0; i < PONG_NUM_PLAYERS; i++)
         {
             m_gamestate.player[i].paddle_pos_y = m_global_control_state.player[i].paddle_x;
+            m_gamestate.player[i].paddle_pos_y_delta = m_global_control_state.player[i].paddle_x_delta;
         }
     
     switch(m_main_state)
@@ -349,7 +383,7 @@ void app_pong_draw_display(void)
             app_display_draw_paddles(m_gamestate.player[0].paddle_pos_y * 32 / LEVEL_SIZE_Y, m_gamestate.player[1].paddle_pos_y * 32 / LEVEL_SIZE_Y,
                                      m_gamestate.player[0].color, m_gamestate.player[1].color, m_graphics_invalidate);
             app_display_score_state(&m_gamestate);
-            app_display_draw_ball(m_gamestate.pong_pos_x * 59 / LEVEL_SIZE_X, m_gamestate.pong_pos_y * 30 / LEVEL_SIZE_Y);
+            app_display_draw_ball(m_gamestate.pong_pos_x * 58 / LEVEL_SIZE_X, m_gamestate.pong_pos_y * 30 / LEVEL_SIZE_Y);
             break;
             
         case STATE_GAME_SCORE_LIMIT_REACHED:

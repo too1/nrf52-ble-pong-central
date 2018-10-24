@@ -220,6 +220,10 @@ static void thingy_tms_c_evt_handler(ble_thingy_tms_c_t * p_thingy_tms_c, ble_th
             NRF_LOG_INFO("TMS service discovered");
             ble_thingy_tms_c_euler_notif_enable(p_thingy_tms_c);
             app_pong_controller_status_change(p_thingy_tms_c->conn_handle, CONSTATE_ACTIVE);
+            if(ble_conn_state_central_conn_count() < 2)
+            {
+                scan_start();
+            }
             break;
 
         case BLE_THINGY_TMS_C_EVT_EULER_NOTIFICATION:
@@ -247,7 +251,9 @@ static void thingy_tms_c_evt_handler(ble_thingy_tms_c_t * p_thingy_tms_c, ble_th
                 {
                     if(&m_thingy_tms_c[i] == p_thingy_tms_c)
                     {
-                        app_pong_get_controller(i)->paddle_x = paddle_percentage * LEVEL_SIZE_Y / 100;
+                        uint32_t new_paddle_x = paddle_percentage * LEVEL_SIZE_Y / 100;
+                        app_pong_get_controller(i)->paddle_x_delta = new_paddle_x - app_pong_get_controller(i)->paddle_x;
+                        app_pong_get_controller(i)->paddle_x = new_paddle_x;
                         break;
                     }
                 }
@@ -340,7 +346,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             {
                 // Resume scanning.
                 bsp_board_led_on(CENTRAL_SCANNING_LED);
-                scan_start();
+                //scan_start();
             }
             
             app_pong_controller_status_change(p_gap_evt->conn_handle, CONSTATE_CONNECTED);

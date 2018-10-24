@@ -7,7 +7,7 @@
   <FrameBufferWindow bufferHeight="-1" addressSpace="" addressText="" bufferWidth="-1"/>
  </FrameBufferWindow>
  <Memory1>
-  <MemoryWindow addressSpace="" dataSize="1" autoEvaluate="0" viewMode="0" addressOrder="0" columnsText="" refreshPeriod="0" name="ble_app_multilink_central_pca10040_s132" radix="16" sizeText="sizeof gamestate" addressText="p_evt"/>
+  <MemoryWindow addressSpace="" dataSize="1" autoEvaluate="0" viewMode="0" addressOrder="0" columnsText="" refreshPeriod="0" name="ble_app_multilink_central_pca10040_s132" radix="16" sizeText="12" addressText="text"/>
  </Memory1>
  <Memory2>
   <MemoryWindow addressSpace="" dataSize="1" autoEvaluate="0" viewMode="0" addressOrder="0" columnsText="" refreshPeriod="0" name="ble_app_multilink_central_pca10040_s132" radix="16" sizeText="" addressText=""/>
@@ -58,8 +58,9 @@
    <Watchpoint numelements="0" expression="p_evt" evalMode="1" name="p_evt" radix="16" linenumber="298" filename="../../../ble_thingy_client/ble_thingy_tms_c.c" list=""/>
    <Watchpoint numelements="0" expression="p_char" evalMode="0" name="p_char" radix="16" linenumber="335" filename="../../../ble_thingy_client/ble_thingy_tms_c.c" list=""/>
    <Watchpoint numelements="0" expression="p_ble_thingy_tms_c" evalMode="1" name="p_ble_thingy_tms_c" radix="-1" linenumber="564" filename="../../../ble_thingy_client/ble_thingy_tms_c.c" list=""/>
-   <Watchpoint numelements="0" expression="gamestate" evalMode="0" name="gamestate" radix="16" linenumber="629" filename="../../../main.c" list=""/>
-   <Watchpoint numelements="0" expression="pong_screen_x" evalMode="0" name="pong_screen_x" radix="16" linenumber="646" filename="../../../main.c" list=""/>
+   <Watchpoint numelements="0" expression="gamestate" evalMode="0" name="gamestate" radix="16" linenumber="636" filename="../../../main.c" list=""/>
+   <Watchpoint numelements="0" expression="pong_screen_x" evalMode="0" name="pong_screen_x" radix="16" linenumber="653" filename="../../../main.c" list=""/>
+   <Watchpoint numelements="0" expression="point" evalMode="0" name="point" radix="-1" linenumber="117" filename="../../../app_display.c" list=""/>
   </Watches>
  </Watch1>
  <Watch2>
@@ -72,25 +73,27 @@
   <Watches active="0" update="Never"/>
  </Watch4>
  <Files>
-  <SessionOpenFile windowGroup="DockEditLeft" x="14" y="801" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../main.c" selected="0" top="761" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="41" y="30" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../app_display.c" selected="0" top="6" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="40" y="14" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../app_display.h" selected="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="8" y="274" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../display_driver/drv_led_matrix.c" selected="0" top="96" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="18" y="253" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../main.c" selected="0" top="217" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="6" y="120" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../app_display.c" selected="0" top="103" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="117" y="23" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../app_display.h" selected="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="274" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../display_driver/drv_led_matrix.c" selected="0" top="202" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="27" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../display_driver/drv_led_matrix.h" selected="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="58" y="161" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../app_pong.c" selected="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="25" y="61" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../app_pong.h" selected="0" top="36" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="246" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../app_pong.c" selected="1" top="307" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="96" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../app_pong.h" selected="0" top="63" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="384" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../ble_thingy_client/ble_thingy_uis_c.c" selected="0" top="357" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="98" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/libraries/util/app_error_weak.c" selected="0" top="70" codecName=""/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="72" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/libraries/util/app_error.c" selected="0" top="45" codecName=""/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="98" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/libraries/util/app_error_weak.c" selected="0" top="70" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="72" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/libraries/util/app_error.c" selected="0" top="45" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="2445" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/softdevice/s132/headers/ble_gap.h" selected="0" top="2418" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="28" y="12" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../display_driver/gfx_glue_layer.c" selected="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="12" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../display_driver/gfx_glue_layer.c" selected="0" top="0" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="6809" useTextEdit="1" useBinaryEdit="0" left="0" path="../config/sdk_config.h" selected="0" top="6778" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="28" y="217" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/libraries/gfx/nrf_gfx.h" selected="0" top="180" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="31" y="295" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/libraries/gfx/nrf_gfx.h" selected="0" top="268" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../adafruit-led-matrix-driver/gfx_glue_layer.h" selected="0" top="0" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="7" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../display_driver/gfx_glue_layer.h" selected="0" top="0" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="139" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/libraries/gfx/nrf_lcd.h" selected="0" top="113" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="8" y="1299" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../display_driver/font.h" selected="1" top="1272" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="40" y="2629" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../display_driver/font.h" selected="0" top="2603" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../adafruit-led-matrix-driver/font_adafruit.h" selected="0" top="1772" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="11" y="552" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/libraries/gfx/nrf_gfx.c" selected="0" top="109" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="42" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../external/thedotfactory_fonts/nrf_font.h" selected="0" top="0" codecName="Default"/>
  </Files>
- <ARMCrossStudioWindow activeProject="ble_app_multilink_central_pca10040_s132" fileDialogDefaultFilter="" autoConnectTarget="J-Link" buildConfiguration="Release" debugSearchFileMap="C:/Nordic Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/drivers/src/nrfx_clock.c&#xa;&#xa;C:/Nordic Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/drivers/src/nrfx_gpiote.c&#xa;&#xa;C:/Nordic Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/mdk/ses_nrf52_Vectors.s&#xa;&#xa;C:/Nordic Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/mdk/ses_nRF_Startup.s&#xa;" fileDialogInitialDirectory="C:/Nordic_Semiconductor/nRF5_SDK_15.0.0_a53641a/examples/_too/nrf52-ble-pong-central/display_driver" debugSearchPath="" autoConnectCapabilities="3711"/>
+ <ARMCrossStudioWindow activeProject="ble_app_multilink_central_pca10040_s132" fileDialogDefaultFilter="" autoConnectTarget="J-Link" buildConfiguration="Release" debugSearchFileMap="C:/Nordic Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/drivers/src/nrfx_clock.c&#xa;&#xa;C:/Nordic Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/drivers/src/nrfx_gpiote.c&#xa;&#xa;C:/Nordic Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/mdk/ses_nrf52_Vectors.s&#xa;&#xa;C:/Nordic Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/mdk/ses_nRF_Startup.s&#xa;" fileDialogInitialDirectory="C:/Nordic_Semiconductor/nRF5_SDK_15.0.0_a53641a/examples/_too/nrf52-ble-pong-central/display_driver/gfx_local_mod" debugSearchPath="" autoConnectCapabilities="3711"/>
 </session>

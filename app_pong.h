@@ -5,20 +5,25 @@
 #include <stdbool.h>
 #include "app_timer.h"
 
-#define GAME_LOOP_UPDATE_MS     25
-#define GAME_LOOP_UPDATE_FREQ   (1000 / GAME_LOOP_UPDATE_MS)
-#define PONG_NUM_PLAYERS        2
+#define GAME_LOOP_UPDATE_MS             25
+#define GAME_LOOP_UPDATE_FREQ           (1000 / GAME_LOOP_UPDATE_MS)
+#define PONG_NUM_PLAYERS                2
 
-#define PADDLE_CONTROLLER_RANGE 100
+#define PADDLE_CONTROLLER_RANGE         100
 
-#define LEVEL_SIZE_X            1000
-#define LEVEL_SIZE_Y            500
-#define PADDLE_SIZE_Y           LEVEL_SIZE_Y / 4
-#define PADDLE_HALFSIZE_Y       (PADDLE_SIZE_Y / 2)
+#define LEVEL_SIZE_X                    1000
+#define LEVEL_SIZE_Y                    500
+#define PADDLE_SIZE_Y                   ((LEVEL_SIZE_Y / 4) + 30)
+#define PADDLE_HALFSIZE_Y               (PADDLE_SIZE_Y / 2)
 
-#define PONG_PREDELAY_TIME_S    5
-#define PONG_SCORE_LIMIT        5
-#define PONG_SPEED_INC_INTERVAL 10
+#define PONG_PREDELAY_TIME_S            5
+#define PONG_SCORE_LIMIT                5
+#define PONG_SPEED_INC_INTERVAL         10
+#define PONG_SPEED_REDUCTION_PR_BALL    2
+#define PONG_PADDLE_SPEED_TO_BALL_RATIO 30
+#define PONG_BALL_START_SPEED_X         8
+#define PONG_BALL_START_SPEED_Y         5
+#define PONG_BALL_Y_SPEED_RED_DIVIDER   8
 
 typedef enum {CONSTATE_DISCONNECTED,    // Thingy disconnected
               CONSTATE_CONNECTED,       // Thingy connected, services disabled
@@ -38,6 +43,7 @@ typedef struct
     uint16_t connected_state;   // The state of the Thingy associated with this player
     uint16_t con_handle;        // The connection handle of the Thingy associated with this player
     uint32_t paddle_pos_y;      // Current paddle position
+    int32_t  paddle_pos_y_delta;
     uint32_t score;             // Current score of the player
     uint32_t color;             // The GUI color of the player
 }pong_player_state_t;
@@ -50,6 +56,7 @@ typedef struct
     int32_t pong_pos_y;
     int32_t pong_speed_x;
     int32_t pong_speed_y;
+    int32_t pong_speed_y_boost;
     uint32_t time_since_last_speed_increment;
     uint32_t speed_multiplier_factor;
 }pong_gamestate_t;
@@ -57,6 +64,7 @@ typedef struct
 typedef struct
 {
     uint32_t paddle_x;
+    int32_t  paddle_x_delta;
     bool     button_pressed;
 }pong_controller_state_t;
 
