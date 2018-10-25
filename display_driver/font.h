@@ -2667,7 +2667,7 @@ const FONT_INFO bellMT_9ptFontInfo =
 	11, //  Character height
 	'!', //  Start character
 	'~', //  End character
-	2, //  Width, in pixels, of space character
+	1, //  Width, in pixels, of space character
 	bellMT_9ptDescriptors, //  Character descriptor array
 	bellMT_9ptBitmaps, //  Character bitmap array
 };
@@ -2679,7 +2679,7 @@ const FONT_INFO arialNarrow_8ptFontInfo =
 	11, //  Character height
 	'!', //  Start character
 	'~', //  End character
-	2, //  Width, in pixels, of space character
+	1, //  Width, in pixels, of space character
 	arialNarrow_8ptDescriptors, //  Character descriptor array
 	arialNarrow_8ptBitmaps, //  Character bitmap array
 };

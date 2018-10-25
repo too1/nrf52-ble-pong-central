@@ -182,7 +182,8 @@ static void update_game_running(void)
         {
             m_gamestate.pong_pos_x = LEVEL_SIZE_X;
             m_gamestate.ball_direction = PI - m_gamestate.ball_direction;
-            m_gamestate.ball_rotation += (float)m_gamestate.player[1].paddle_pos_y_delta * 0.1f;
+            m_gamestate.ball_rotation += (float)m_gamestate.player[1].paddle_pos_y_delta * 0.05f;
+            NRF_LOG_INFO("New ball rotation: %i", (int)(m_gamestate.ball_rotation * 1000.0f));
             play_sound(1, SOUND_SAMPLE_HIT);
         }
         else
@@ -201,7 +202,8 @@ static void update_game_running(void)
         {
             m_gamestate.pong_pos_x = 0;
             m_gamestate.ball_direction = PI - m_gamestate.ball_direction;
-            m_gamestate.ball_rotation -= (float)m_gamestate.player[0].paddle_pos_y_delta * 0.1f;
+            m_gamestate.ball_rotation -= (float)m_gamestate.player[0].paddle_pos_y_delta * 0.05f;
+            NRF_LOG_INFO("New ball rotation: %i", (int)(m_gamestate.ball_rotation * 1000.0f));
             play_sound(0, SOUND_SAMPLE_HIT);
         }
         else

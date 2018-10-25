@@ -103,7 +103,6 @@ BLE_THINGY_TSS_C_ARRAY_DEF(m_thingy_tss_c, NRF_SDH_BLE_CENTRAL_LINK_COUNT);
 enum {THINGY_SERVICE_MASK_UIS = 1, THINGY_SERVICE_MASK_TMS = 2, THINGY_SERVICE_MASK_TSS = 4, THINGY_SERVICE_ALL_MASKS = 0x07};
 BLE_DB_DISCOVERY_ARRAY_DEF(m_db_disc, NRF_SDH_BLE_CENTRAL_LINK_COUNT);  /**< Database discovery module instances. */
 
-APP_TIMER_DEF(m_app_timer_interface_update);
 APP_TIMER_DEF(m_app_timer_perf_update);
 
 static char const m_target_periph_name[] = "PongThin";             /**< Name of the device we try to connect to. This name is searched for in the scan report data*/
@@ -685,79 +684,24 @@ static void gatt_init(void)
     APP_ERROR_CHECK(err_code);
 }
 
-static void interface_update_timer_callback(void *p)
-{
-
-}
-
-#define UART_SCREEN_X 15
-#define UART_SCREEN_Y 10
-static void pong_draw_screen(pong_gamestate_t *gamestate)
-{
-#if 0
-    static divider = 0;
-    if(++divider > 5)
-    {
-        divider = 0;
-        uint8_t screen_matrix[UART_SCREEN_X + 2][10] = {0};
-        uint32_t pong_screen_x = gamestate->pong_pos_x * UART_SCREEN_X / 1000;    
-        uint32_t pong_screen_y = gamestate->pong_pos_y * UART_SCREEN_Y / 1000;
-        
-        // Set ball
-        screen_matrix[pong_screen_x + 1][pong_screen_y] = 1;
-        // Set left paddle
-        screen_matrix[0][gamestate->player[0].paddle_pos_y * UART_SCREEN_Y / 101] = 1;
-        // Set right paddle
-        screen_matrix[UART_SCREEN_X + 1][gamestate->player[1].paddle_pos_y * UART_SCREEN_Y / 101] = 1;
-
-        //printf("\r\n---------------------\r\n");
-        for(int y = 0; y < UART_SCREEN_Y; y++)
-        {
-            bool pixels_present = false;
-            for(int x = 0; x < (UART_SCREEN_X+2); x++)
-            {
-                if(screen_matrix[x][y] != 0)
-                {
-                    pixels_present = true;
-                    break;
-                }
-            }
-            if(pixels_present)
-            {
-              for(int x = 0; x < (UART_SCREEN_X+2); x++)
-              {
-                  screen_matrix[x][y] == 1 ? printf("X") : printf(" ");
-              }
-            }
-            printf("\r\n");
-               
-        }
-    }
-#else
-    app_pong_draw_display();
-#endif       
-}
-
 static void app_pong_event_handler(pong_event_t *evt)
 {
     switch(evt->evt_type)
     {
         case PONG_EVENT_GAMESTATE_UPDATE:
-            pong_draw_screen(evt->game_state);
-            //NRF_LOG_INFO("x: %i, y: %i", evt->game_state->pong_pos_x, evt->game_state->pong_pos_y);
+            app_pong_draw_display();
             break;
             
         case PONG_EVENT_CON_SET_COLOR:
             if(evt->params.con_set_color.conn_handle < PONG_NUM_PLAYERS)
             {
                 uint32_t color = evt->params.con_set_color.color;
-                NRF_LOG_INFO("Setting color %x", color);
                 ble_thingy_uis_led_set_constant(&m_thingy_uis_c[evt->params.con_set_color.conn_handle], color >> 16, (color >> 8) & 0xFF, color & 0xFF);
             }
             break;
             
         case PONG_EVENT_PLAY_SOUND:
-            //ble_thingy_tss_spk_data_sample_send(&m_thingy_tss_c[evt->params.play_sound.controller_index], evt->params.play_sound.sample_id);
+            ble_thingy_tss_spk_data_sample_send(&m_thingy_tss_c[evt->params.play_sound.controller_index], evt->params.play_sound.sample_id);
             break;
         
         default:
@@ -862,9 +806,6 @@ int main(void)
     perf_init();   
     
     scan_start();
-    
-    app_timer_create(&m_app_timer_interface_update, APP_TIMER_MODE_REPEATED, interface_update_timer_callback);
-    app_timer_start(m_app_timer_interface_update, APP_TIMER_TICKS(5000), 0);
     
     pong_init();
 
