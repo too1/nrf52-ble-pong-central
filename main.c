@@ -63,6 +63,7 @@
 #include "ble_lbs_c.h"
 #include "ble_thingy_uis_c.h"
 #include "ble_thingy_tms_c.h"
+#include "ble_thingy_tss_c.h"
 #include "ble_conn_state.h"
 #include "nrf_ble_gatt.h"
 #include "nrf_pwr_mgmt.h"
@@ -98,6 +99,8 @@
 NRF_BLE_GATT_DEF(m_gatt);                                               /**< GATT module instance. */
 BLE_THINGY_UIS_C_ARRAY_DEF(m_thingy_uis_c, NRF_SDH_BLE_CENTRAL_LINK_COUNT);
 BLE_THINGY_TMS_C_ARRAY_DEF(m_thingy_tms_c, NRF_SDH_BLE_CENTRAL_LINK_COUNT);
+BLE_THINGY_TSS_C_ARRAY_DEF(m_thingy_tss_c, NRF_SDH_BLE_CENTRAL_LINK_COUNT);
+enum {THINGY_SERVICE_MASK_UIS = 1, THINGY_SERVICE_MASK_TMS = 2, THINGY_SERVICE_MASK_TSS = 4, THINGY_SERVICE_ALL_MASKS = 0x07};
 BLE_DB_DISCOVERY_ARRAY_DEF(m_db_disc, NRF_SDH_BLE_CENTRAL_LINK_COUNT);  /**< Database discovery module instances. */
 
 APP_TIMER_DEF(m_app_timer_interface_update);
@@ -178,6 +181,43 @@ static void scan_start(void)
     bsp_board_led_on(CENTRAL_SCANNING_LED);
 }
 
+static uint16_t thingy_under_discovery_conn_handle = 0xFFFF;
+
+static void thingy_service_discovered(uint32_t service_mask)
+{
+    static uint32_t registered_masks[NRF_SDH_BLE_CENTRAL_LINK_COUNT] = {0};
+    if(thingy_under_discovery_conn_handle < NRF_SDH_BLE_CENTRAL_LINK_COUNT)
+    {
+        registered_masks[thingy_under_discovery_conn_handle] |= service_mask;
+        if(registered_masks[thingy_under_discovery_conn_handle] == THINGY_SERVICE_ALL_MASKS)
+        {
+            // All the services are discovered, which means the thingy is ready for use
+            NRF_LOG_INFO("YAY");
+            
+            if (ble_conn_state_central_conn_count() == NRF_SDH_BLE_CENTRAL_LINK_COUNT)
+            {
+                bsp_board_led_off(CENTRAL_SCANNING_LED);
+            }
+            else
+            {
+                // Resume scanning.
+                bsp_board_led_on(CENTRAL_SCANNING_LED);
+                scan_start();
+            }
+            registered_masks[thingy_under_discovery_conn_handle] = 0;
+            
+            // Set up the Thingy for use here
+            ble_thingy_tms_c_euler_notif_enable(&m_thingy_tms_c[thingy_under_discovery_conn_handle]);
+            app_pong_controller_status_change(thingy_under_discovery_conn_handle, CONSTATE_ACTIVE);
+            ble_thingy_uis_c_button_notif_enable(&m_thingy_uis_c[thingy_under_discovery_conn_handle]);
+            ble_thingy_tss_config_send(&m_thingy_tss_c[thingy_under_discovery_conn_handle], 
+                                                TSS_CONFIG_SPEAKER_MODE_SAMPLE, 0);
+        
+            thingy_under_discovery_conn_handle = 0xFFFF;
+        }
+    }
+    
+}
 
 /**@brief Handles events coming from the LED Button central module.
  *
@@ -189,21 +229,23 @@ static void thingy_uis_c_evt_handler(ble_thingy_uis_c_t * p_thingy_uis_c, ble_th
     switch (p_thingy_uis_c_evt->evt_type)
     {
         case BLE_LBS_C_EVT_DISCOVERY_COMPLETE:
-            ble_thingy_uis_c_button_notif_enable(p_thingy_uis_c);
-            ble_thingy_uis_led_set_constant(p_thingy_uis_c, 0, 255, 255);
+            NRF_LOG_INFO("UIS service discovered");
+            thingy_service_discovered(THINGY_SERVICE_MASK_UIS);
             break; // BLE_LBS_C_EVT_DISCOVERY_COMPLETE
 
         case BLE_LBS_C_EVT_BUTTON_NOTIFICATION:
             NRF_LOG_INFO("Button pressed");
-            for(int i = 0; i < PONG_NUM_PLAYERS; i++)
+            if(p_thingy_uis_c_evt->params.button.button_state)
             {
-                if(&m_thingy_uis_c[i] == p_thingy_uis_c)
+                for(int i = 0; i < PONG_NUM_PLAYERS; i++)
                 {
-                    app_pong_get_controller(i)->button_pressed = true;
-                    break;
+                    if(&m_thingy_uis_c[i] == p_thingy_uis_c)
+                    {
+                        app_pong_get_controller(i)->button_pressed = true;
+                        break;
+                    }
                 }
             }
-            //app_pong_set_global_control_state(&m_pong_control_state);
             break; // BLE_LBS_C_EVT_BUTTON_NOTIFICATION   */
 
         default:
@@ -218,12 +260,7 @@ static void thingy_tms_c_evt_handler(ble_thingy_tms_c_t * p_thingy_tms_c, ble_th
     {
         case BLE_THINGY_TMS_C_EVT_DISCOVERY_COMPLETE:
             NRF_LOG_INFO("TMS service discovered");
-            ble_thingy_tms_c_euler_notif_enable(p_thingy_tms_c);
-            app_pong_controller_status_change(p_thingy_tms_c->conn_handle, CONSTATE_ACTIVE);
-            if(ble_conn_state_central_conn_count() < 2)
-            {
-                scan_start();
-            }
+            thingy_service_discovered(THINGY_SERVICE_MASK_TMS);
             break;
 
         case BLE_THINGY_TMS_C_EVT_EULER_NOTIFICATION:
@@ -266,7 +303,23 @@ static void thingy_tms_c_evt_handler(ble_thingy_tms_c_t * p_thingy_tms_c, ble_th
             break;
     }  
 }
-
+    
+static void thingy_tss_c_evt_handler(ble_thingy_tss_c_t * p_thingy_tss_c, ble_thingy_tss_c_evt_t * p_thingy_tss_c_evt) 
+{
+    switch (p_thingy_tss_c_evt->evt_type)
+    {
+        case BLE_THINGY_TSS_C_EVT_DISCOVERY_COMPLETE:
+            NRF_LOG_INFO("TSS service discovered");
+            thingy_service_discovered(THINGY_SERVICE_MASK_TSS);
+            break;
+            
+        case BLE_THINGY_TSS_C_EVT_SPEAKER_STATUS_NOTIFICATION:
+            break;
+            
+        case BLE_THINGY_TSS_C_EVT_MICROPHONE_NOTIFICATION:
+            break;
+    }
+}
 
 /**@brief Function for handling the advertising report BLE event.
  *
@@ -327,7 +380,12 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             
             err_code = ble_thingy_tms_c_handles_assign(&m_thingy_tms_c[p_gap_evt->conn_handle], p_gap_evt->conn_handle, NULL);
             APP_ERROR_CHECK(err_code);
+            
+            err_code = ble_thingy_tss_c_handles_assign(&m_thingy_tss_c[p_gap_evt->conn_handle], p_gap_evt->conn_handle, NULL);
+            APP_ERROR_CHECK(err_code);
 
+            thingy_under_discovery_conn_handle = p_gap_evt->conn_handle;
+            
             err_code = ble_db_discovery_start(&m_db_disc[p_gap_evt->conn_handle],
                                               p_gap_evt->conn_handle);
             if (err_code != NRF_ERROR_BUSY)
@@ -338,16 +396,6 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             // Update LEDs status, and check if we should be looking for more
             // peripherals to connect to.
             bsp_board_led_on(CENTRAL_CONNECTED_LED);
-            if (ble_conn_state_central_conn_count() == NRF_SDH_BLE_CENTRAL_LINK_COUNT)
-            {
-                bsp_board_led_off(CENTRAL_SCANNING_LED);
-            }
-            else
-            {
-                // Resume scanning.
-                bsp_board_led_on(CENTRAL_SCANNING_LED);
-                //scan_start();
-            }
             
             app_pong_controller_status_change(p_gap_evt->conn_handle, CONSTATE_CONNECTED);
         } break; // BLE_GAP_EVT_CONNECTED
@@ -442,15 +490,19 @@ static void thingy_c_init(void)
     ret_code_t err_code;
     ble_thingy_uis_c_init_t thingy_uis_c_init_obj;
     ble_thingy_tms_c_init_t thingy_tms_c_init_obj;
+    ble_thingy_tss_c_init_t thingy_tss_c_init_obj;
     
     thingy_uis_c_init_obj.evt_handler = thingy_uis_c_evt_handler;
     thingy_tms_c_init_obj.evt_handler = thingy_tms_c_evt_handler;
+    thingy_tss_c_init_obj.evt_handler = thingy_tss_c_evt_handler;
     
     for (uint32_t i = 0; i < NRF_SDH_BLE_CENTRAL_LINK_COUNT; i++)
     {
         err_code = ble_thingy_uis_c_init(&m_thingy_uis_c[i], &thingy_uis_c_init_obj);
         APP_ERROR_CHECK(err_code);
         err_code = ble_thingy_tms_c_init(&m_thingy_tms_c[i], &thingy_tms_c_init_obj);
+        APP_ERROR_CHECK(err_code);
+        err_code = ble_thingy_tss_c_init(&m_thingy_tss_c[i], &thingy_tss_c_init_obj);
         APP_ERROR_CHECK(err_code);
     }
 }
@@ -569,6 +621,7 @@ static void db_disc_handler(ble_db_discovery_evt_t * p_evt)
 
     ble_thingy_uis_on_db_disc_evt(&m_thingy_uis_c[p_evt->conn_handle], p_evt);
     ble_thingy_tms_on_db_disc_evt(&m_thingy_tms_c[p_evt->conn_handle], p_evt);
+    ble_thingy_tss_on_db_disc_evt(&m_thingy_tss_c[p_evt->conn_handle], p_evt);
 }
 
 
@@ -702,6 +755,11 @@ static void app_pong_event_handler(pong_event_t *evt)
                 ble_thingy_uis_led_set_constant(&m_thingy_uis_c[evt->params.con_set_color.conn_handle], color >> 16, (color >> 8) & 0xFF, color & 0xFF);
             }
             break;
+            
+        case PONG_EVENT_PLAY_SOUND:
+            ble_thingy_tss_spk_data_sample_send(&m_thingy_tss_c[evt->params.play_sound.controller_index], evt->params.play_sound.sample_id);
+            break;
+        
         default:
             break;
     }

@@ -98,8 +98,6 @@
     <folder Name="Application">
       <file file_name="../../../main.c" />
       <file file_name="../config/sdk_config.h" />
-      <file file_name="../../../ble_thingy_client/ble_thingy_uis_c.c" />
-      <file file_name="../../../ble_thingy_client/ble_thingy_tms_c.c" />
       <file file_name="../../../app_pong.c" />
     </folder>
     <folder Name="nRF_Segger_RTT">
@@ -115,7 +113,9 @@
       <file file_name="../../../../../../components/ble/nrf_ble_gatt/nrf_ble_gatt.c" />
     </folder>
     <folder Name="nRF_BLE_Services">
-      <file file_name="../../../../../../components/ble/ble_services/ble_lbs_c/ble_lbs_c.c" />
+      <file file_name="../../../ble_thingy_client/ble_thingy_uis_c.c" />
+      <file file_name="../../../ble_thingy_client/ble_thingy_tms_c.c" />
+      <file file_name="../../../ble_thingy_client/ble_thingy_tss_c.c" />
     </folder>
     <folder Name="nRF_SoftDevice">
       <file file_name="../../../../../../components/softdevice/common/nrf_sdh.c" />

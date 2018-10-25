@@ -64,6 +64,16 @@ static void set_main_state(uint32_t new_state)
     state_lifetime = 0;
 }
 
+static void play_sound(uint32_t con_index, pong_sound_sample_t sample_id)
+{
+    // Send event back to the application to play the sound
+    m_pong_event.evt_type = PONG_EVENT_PLAY_SOUND;
+    m_pong_event.game_state = &m_gamestate;
+    m_pong_event.params.play_sound.controller_index = con_index;
+    m_pong_event.params.play_sound.sample_id = sample_id;
+    m_event_callback(&m_pong_event);
+}
+
 static void reset_ball(void)
 {
     uint32_t winning_player = 0xFFFF;
@@ -72,7 +82,6 @@ static void reset_ball(void)
     m_gamestate.pong_speed_x = PONG_BALL_START_SPEED_X;
     m_gamestate.pong_speed_y = PONG_BALL_START_SPEED_Y;  
     m_gamestate.time_since_last_speed_increment = 0;
-    NRF_LOG_INFO("Speed multiplier taken down from %i to %i", m_gamestate.speed_multiplier_factor, m_gamestate.speed_multiplier_factor - 2);
     if(m_gamestate.speed_multiplier_factor > PONG_SPEED_REDUCTION_PR_BALL)
     {
         m_gamestate.speed_multiplier_factor -= PONG_SPEED_REDUCTION_PR_BALL;
@@ -150,11 +159,14 @@ static void update_game_running(void)
             m_gamestate.pong_pos_x = LEVEL_SIZE_X;
             m_gamestate.pong_speed_x *= -1;
             m_gamestate.pong_speed_y_boost = m_gamestate.player[1].paddle_pos_y_delta * PONG_PADDLE_SPEED_TO_BALL_RATIO / 100;
+            play_sound(1, SOUND_SAMPLE_HIT);
             NRF_LOG_INFO("PSpeed: %i, Ball speed: %i", m_gamestate.player[1].paddle_pos_y_delta, m_gamestate.pong_speed_y);
         }
         else
         {
             // The ball missed. Increment score and reset ball
+            play_sound(0, SOUND_SAMPLE_COLLECT_POINT_B);
+            play_sound(1, SOUND_SAMPLE_EXPLOSION_B);
             m_gamestate.player[0].score++;
             reset_ball();
         }
@@ -167,11 +179,14 @@ static void update_game_running(void)
             m_gamestate.pong_pos_x = 0;
             m_gamestate.pong_speed_x *= -1;
             m_gamestate.pong_speed_y_boost = m_gamestate.player[0].paddle_pos_y_delta * PONG_PADDLE_SPEED_TO_BALL_RATIO / 100;
+            play_sound(0, SOUND_SAMPLE_HIT);
             NRF_LOG_INFO("PSpeed: %i, Ball speed: %i", m_gamestate.player[0].paddle_pos_y_delta, m_gamestate.pong_speed_y);
         }
         else
         {
             // The ball missed. Increment score and reset ball
+            play_sound(0, SOUND_SAMPLE_EXPLOSION_B);
+            play_sound(1, SOUND_SAMPLE_COLLECT_POINT_B);
             m_gamestate.player[1].score++;
             reset_ball();
         }     
@@ -265,7 +280,7 @@ uint32_t app_pong_init(pong_config_t *config)
     reset_game();
     m_gamestate.player[0].connected_state = CONSTATE_DISCONNECTED;
     m_gamestate.player[1].connected_state = CONSTATE_DISCONNECTED;
-    m_gamestate.player[0].color = CL_TEAL;
+    m_gamestate.player[0].color = CL_GREEN;
     m_gamestate.player[1].color = CL_BLUE;
     m_main_state = STATE_WAITING_FOR_PLAYERS;
     return 0;

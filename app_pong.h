@@ -19,11 +19,22 @@
 #define PONG_PREDELAY_TIME_S            5
 #define PONG_SCORE_LIMIT                5
 #define PONG_SPEED_INC_INTERVAL         10
-#define PONG_SPEED_REDUCTION_PR_BALL    2
+#define PONG_SPEED_REDUCTION_PR_BALL    1
 #define PONG_PADDLE_SPEED_TO_BALL_RATIO 30
 #define PONG_BALL_START_SPEED_X         8
 #define PONG_BALL_START_SPEED_Y         5
 #define PONG_BALL_Y_SPEED_RED_DIVIDER   8
+
+typedef enum {SOUND_SAMPLE_COLLECT_POINT_A,
+              SOUND_SAMPLE_COLLECT_POINT_B,
+              SOUND_SAMPLE_EXPLOSION_A,
+              SOUND_SAMPLE_EXPLOSION_B,
+              SOUND_SAMPLE_HIT,
+              SOUND_SAMPLE_PICKUP_A,
+              SOUND_SAMPLE_PICKUP_B,
+              SOUND_SAMPLE_SHOOT_A,
+              SOUND_SAMPLE_SHOOT_B
+              }pong_sound_sample_t;
 
 typedef enum {CONSTATE_DISCONNECTED,    // Thingy disconnected
               CONSTATE_CONNECTED,       // Thingy connected, services disabled
@@ -73,7 +84,7 @@ typedef struct
     pong_controller_state_t player[PONG_NUM_PLAYERS];
 }pong_global_control_state_t;
 
-typedef enum {PONG_EVENT_GAMESTATE_UPDATE, PONG_EVENT_CON_SET_COLOR}pong_event_type_t;
+typedef enum {PONG_EVENT_GAMESTATE_UPDATE, PONG_EVENT_CON_SET_COLOR, PONG_EVENT_PLAY_SOUND}pong_event_type_t;
     
 typedef struct 
 {
@@ -83,11 +94,18 @@ typedef struct
 
 typedef struct
 {
+    uint8_t  sample_id;
+    uint16_t controller_index;
+}pong_event_param_play_sound_t;
+
+typedef struct
+{
     pong_event_type_t evt_type;
     pong_gamestate_t *game_state;
     union
     {
         pong_event_param_con_set_color_t con_set_color;
+        pong_event_param_play_sound_t    play_sound;
     }params;
 }pong_event_t;
 
