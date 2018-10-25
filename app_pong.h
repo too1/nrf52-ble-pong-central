@@ -16,6 +16,14 @@
 #define PADDLE_SIZE_Y                   ((LEVEL_SIZE_Y / 4) + 30)
 #define PADDLE_HALFSIZE_Y               (PADDLE_SIZE_Y / 2)
 
+#define PI                              3.141592f
+#define PI_1_2                          1.570796f
+#define PI_3_2                          4.712389f
+#define PONG_DIRECTION_RIGHT            0.0f
+#define PONG_DIRECTION_DOWN             PI_1_2
+#define PONG_DIRECTION_LEFT             PI
+#define PONG_DIRECTION_UP               PI_3_2
+
 #define PONG_PREDELAY_TIME_S            5
 #define PONG_SCORE_LIMIT                5
 #define PONG_SPEED_INC_INTERVAL         10
@@ -23,7 +31,10 @@
 #define PONG_PADDLE_SPEED_TO_BALL_RATIO 30
 #define PONG_BALL_START_SPEED_X         8
 #define PONG_BALL_START_SPEED_Y         5
+#define PONG_BALL_START_SPEED           8.0f
+#define PONG_BALL_SPEED_INC_AMOUNT      1.2f
 #define PONG_BALL_Y_SPEED_RED_DIVIDER   8
+#define PONG_BALL_ROTATION_DECAY_FACTOR 0.95f
 
 typedef enum {SOUND_SAMPLE_COLLECT_POINT_A,
               SOUND_SAMPLE_COLLECT_POINT_B,
@@ -65,11 +76,13 @@ typedef struct
     
     int32_t pong_pos_x;
     int32_t pong_pos_y;
-    int32_t pong_speed_x;
-    int32_t pong_speed_y;
-    int32_t pong_speed_y_boost;
+    float   ball_speed;
+    float   ball_direction;
+    float   ball_rotation;
+    float   ball_pos_x;
+    float   ball_pos_y;
     uint32_t time_since_last_speed_increment;
-    uint32_t speed_multiplier_factor;
+    float   ball_speed_inc_factor;
 }pong_gamestate_t;
 
 typedef struct

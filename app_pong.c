@@ -1,5 +1,6 @@
 #include "app_pong.h"
 #include "app_display.h"
+#include "math.h"
 
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
@@ -22,7 +23,7 @@ static pong_event_t                 m_pong_event;
 static bool                         m_graphics_invalidate = true;
 
 static void reset_game(void);
-static void reset_ball(void);
+static void reset_ball(uint32_t player_score_index);
 
 // "Private" functions
 static void reset_player_button_pressed_state(void)
@@ -64,6 +65,13 @@ static void set_main_state(uint32_t new_state)
     state_lifetime = 0;
 }
 
+static uint8_t get_random_number(void)
+{
+    uint8_t ret_val;
+    sd_rand_application_vector_get(&ret_val, 1);
+    return ret_val;
+}
+
 static void play_sound(uint32_t con_index, pong_sound_sample_t sample_id)
 {
     // Send event back to the application to play the sound
@@ -74,24 +82,39 @@ static void play_sound(uint32_t con_index, pong_sound_sample_t sample_id)
     m_event_callback(&m_pong_event);
 }
 
-static void reset_ball(void)
+static void reset_ball(uint32_t player_scored_index)
 {
     uint32_t winning_player = 0xFFFF;
     m_gamestate.pong_pos_x = LEVEL_SIZE_X / 2;
     m_gamestate.pong_pos_y = LEVEL_SIZE_Y / 2;
-    m_gamestate.pong_speed_x = PONG_BALL_START_SPEED_X;
-    m_gamestate.pong_speed_y = PONG_BALL_START_SPEED_Y;  
     m_gamestate.time_since_last_speed_increment = 0;
-    if(m_gamestate.speed_multiplier_factor > PONG_SPEED_REDUCTION_PR_BALL)
-    {
-        m_gamestate.speed_multiplier_factor -= PONG_SPEED_REDUCTION_PR_BALL;
-    }
-    else
-    {
-        m_gamestate.speed_multiplier_factor = 0;
-    }
-    m_gamestate.speed_multiplier_factor = 0;
+    m_gamestate.ball_pos_x = LEVEL_SIZE_X / 2;
+    m_gamestate.ball_pos_y = LEVEL_SIZE_Y / 2;
+    m_gamestate.ball_speed = PONG_BALL_START_SPEED;
+    m_gamestate.ball_rotation = 0.0f;
     
+    uint8_t rand = get_random_number();
+    switch(player_scored_index)
+    {
+        case 0:
+            m_gamestate.ball_direction = ((float)rand * PI / 2.0f / 255.0f) - (PI * 0.25f);
+            break;
+        case 1:
+            m_gamestate.ball_direction = ((float)rand * PI / 2.0f / 255.0f) + (PI * 0.75f);
+            break;  
+        default:
+            rand = (rand & ~0x20) | ((rand & 0x40) ? 0x20 : 0x00);
+            m_gamestate.ball_direction = (float)rand * 2 * PI / 255.0f;
+            break;
+    }
+
+    // Reduce the speed increase by one step, but make sure it doesn't go below 1
+    m_gamestate.ball_speed_inc_factor /= PONG_BALL_SPEED_INC_AMOUNT;
+    if(m_gamestate.ball_speed_inc_factor < 1.0f)
+    {
+        m_gamestate.ball_speed_inc_factor = 1.0f;
+    }
+
     for(int i = 0; i < PONG_NUM_PLAYERS; i++)
     {
        if(m_gamestate.player[i].score >= PONG_SCORE_LIMIT)
@@ -116,7 +139,8 @@ static void reset_game(void)
         m_gamestate.player[i].paddle_pos_y = LEVEL_SIZE_Y / 2;
         m_gamestate.player[i].score = 0;
     }    
-    reset_ball();
+    m_gamestate.ball_speed_inc_factor = 1.0f;
+    reset_ball(0xFFFFFFFF);
 }
 
 static bool check_paddle_y_intersect(uint32_t y, uint32_t paddle_y)
@@ -140,15 +164,15 @@ static bool check_paddle_y_intersect(uint32_t y, uint32_t paddle_y)
     return return_val;
 }
 
-static int32_t scale_speed(int32_t speed)
-{
-    return speed * (4 + (int32_t)m_gamestate.speed_multiplier_factor) / 4;
-}
-
 static void update_game_running(void)
 {
-    // Update pong X position
-    m_gamestate.pong_pos_x += scale_speed(m_gamestate.pong_speed_x);
+    // Update pong position
+    m_gamestate.ball_direction += (m_gamestate.ball_rotation * 0.01f / m_gamestate.ball_speed_inc_factor);
+    m_gamestate.ball_rotation *= PONG_BALL_ROTATION_DECAY_FACTOR;
+    m_gamestate.ball_pos_x += cosf(m_gamestate.ball_direction) * m_gamestate.ball_speed * m_gamestate.ball_speed_inc_factor;
+    m_gamestate.ball_pos_y += sinf(m_gamestate.ball_direction) * m_gamestate.ball_speed * m_gamestate.ball_speed_inc_factor;
+    m_gamestate.pong_pos_x = (int32_t)m_gamestate.ball_pos_x;
+    m_gamestate.pong_pos_y = (int32_t)m_gamestate.ball_pos_y;
     
     // Check if the ball has reached one of the board edges
     if(m_gamestate.pong_pos_x > LEVEL_SIZE_X)
@@ -157,10 +181,9 @@ static void update_game_running(void)
         if(check_paddle_y_intersect(m_gamestate.pong_pos_y, m_gamestate.player[1].paddle_pos_y))
         {
             m_gamestate.pong_pos_x = LEVEL_SIZE_X;
-            m_gamestate.pong_speed_x *= -1;
-            m_gamestate.pong_speed_y_boost = m_gamestate.player[1].paddle_pos_y_delta * PONG_PADDLE_SPEED_TO_BALL_RATIO / 100;
+            m_gamestate.ball_direction = PI - m_gamestate.ball_direction;
+            m_gamestate.ball_rotation += (float)m_gamestate.player[1].paddle_pos_y_delta * 0.1f;
             play_sound(1, SOUND_SAMPLE_HIT);
-            NRF_LOG_INFO("PSpeed: %i, Ball speed: %i", m_gamestate.player[1].paddle_pos_y_delta, m_gamestate.pong_speed_y);
         }
         else
         {
@@ -168,7 +191,7 @@ static void update_game_running(void)
             play_sound(0, SOUND_SAMPLE_COLLECT_POINT_B);
             play_sound(1, SOUND_SAMPLE_EXPLOSION_B);
             m_gamestate.player[0].score++;
-            reset_ball();
+            reset_ball(0);
         }
     }
     else if(m_gamestate.pong_pos_x < 0)
@@ -177,10 +200,9 @@ static void update_game_running(void)
         if(check_paddle_y_intersect(m_gamestate.pong_pos_y, m_gamestate.player[0].paddle_pos_y))
         {
             m_gamestate.pong_pos_x = 0;
-            m_gamestate.pong_speed_x *= -1;
-            m_gamestate.pong_speed_y_boost = m_gamestate.player[0].paddle_pos_y_delta * PONG_PADDLE_SPEED_TO_BALL_RATIO / 100;
+            m_gamestate.ball_direction = PI - m_gamestate.ball_direction;
+            m_gamestate.ball_rotation -= (float)m_gamestate.player[0].paddle_pos_y_delta * 0.1f;
             play_sound(0, SOUND_SAMPLE_HIT);
-            NRF_LOG_INFO("PSpeed: %i, Ball speed: %i", m_gamestate.player[0].paddle_pos_y_delta, m_gamestate.pong_speed_y);
         }
         else
         {
@@ -188,40 +210,28 @@ static void update_game_running(void)
             play_sound(0, SOUND_SAMPLE_EXPLOSION_B);
             play_sound(1, SOUND_SAMPLE_COLLECT_POINT_B);
             m_gamestate.player[1].score++;
-            reset_ball();
+            reset_ball(1);
         }     
     }
 
-    // Update pong Y position
-    m_gamestate.pong_pos_y += scale_speed(m_gamestate.pong_speed_y) + m_gamestate.pong_speed_y_boost;
     if(m_gamestate.pong_pos_y > LEVEL_SIZE_Y)
     {
         m_gamestate.pong_pos_y = LEVEL_SIZE_Y;
-        m_gamestate.pong_speed_y *= -1;
-        m_gamestate.pong_speed_y_boost *= -1;
+        m_gamestate.ball_direction = 2.0f * PI - m_gamestate.ball_direction;
+
     }
     else if(m_gamestate.pong_pos_y < 0)
     {
         m_gamestate.pong_pos_y = 0;
-        m_gamestate.pong_speed_y *= -1;  
-        m_gamestate.pong_speed_y_boost *= -1;      
+        m_gamestate.ball_direction = 2.0f * PI - m_gamestate.ball_direction;
     } 
     
-    // If the ball Y speed is larger than default, reduce it slowly towards the default
-    static uint32_t pong_speed_y_speed_red_divider = 0;
-    if(++pong_speed_y_speed_red_divider > PONG_BALL_Y_SPEED_RED_DIVIDER)
-    {
-        pong_speed_y_speed_red_divider = 0;
-        if((m_gamestate.pong_speed_y + m_gamestate.pong_speed_y_boost) > PONG_BALL_START_SPEED_Y) m_gamestate.pong_speed_y_boost--;
-        else if((m_gamestate.pong_speed_y + m_gamestate.pong_speed_y_boost) < -PONG_BALL_START_SPEED_Y) m_gamestate.pong_speed_y_boost++;
-        NRF_LOG_INFO("ball speed w/boost y: %i", m_gamestate.pong_speed_y + m_gamestate.pong_speed_y_boost);
-    }
     // Update speed multiplier
     m_gamestate.time_since_last_speed_increment++;
     if(m_gamestate.time_since_last_speed_increment > (PONG_SPEED_INC_INTERVAL * GAME_LOOP_UPDATE_FREQ))
     {
         m_gamestate.time_since_last_speed_increment = 0;
-        m_gamestate.speed_multiplier_factor++;
+        m_gamestate.ball_speed_inc_factor *= PONG_BALL_SPEED_INC_AMOUNT;
     }
 }
 
@@ -276,6 +286,7 @@ uint32_t app_pong_init(pong_config_t *config)
     if(config->event_handler == 0) return -1;
     m_event_callback = config->event_handler;
     m_game_initialized = true;
+    
     app_timer_create(&m_game_loop_timer_id, APP_TIMER_MODE_REPEATED, update_game_loop);
     reset_game();
     m_gamestate.player[0].connected_state = CONSTATE_DISCONNECTED;

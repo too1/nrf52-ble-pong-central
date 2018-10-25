@@ -757,7 +757,7 @@ static void app_pong_event_handler(pong_event_t *evt)
             break;
             
         case PONG_EVENT_PLAY_SOUND:
-            ble_thingy_tss_spk_data_sample_send(&m_thingy_tss_c[evt->params.play_sound.controller_index], evt->params.play_sound.sample_id);
+            //ble_thingy_tss_spk_data_sample_send(&m_thingy_tss_c[evt->params.play_sound.controller_index], evt->params.play_sound.sample_id);
             break;
         
         default:
