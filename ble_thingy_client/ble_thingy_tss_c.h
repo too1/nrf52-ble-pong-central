@@ -196,6 +196,8 @@ uint32_t ble_thingy_tss_config_send(ble_thingy_tss_c_t * p_ble_thingy_tss_c,
                                     thingy_tss_config_speaker_mode_t speaker_mode, 
                                     thingy_tss_config_mic_mode_t mic_mode);
                                     
+uint32_t ble_thingy_tss_spk_data_sample_send(ble_thingy_tss_c_t * p_ble_thingy_tss_c, uint8_t sample_id);
+                                    
 void ble_thingy_tss_on_db_disc_evt(ble_thingy_tss_c_t * p_ble_thingy_tss_c, const ble_db_discovery_evt_t * p_evt);
 
 
