@@ -293,8 +293,8 @@ uint32_t app_pong_init(pong_config_t *config)
     reset_game();
     m_gamestate.player[0].connected_state = CONSTATE_DISCONNECTED;
     m_gamestate.player[1].connected_state = CONSTATE_DISCONNECTED;
-    m_gamestate.player[0].color = CL_GREEN;
-    m_gamestate.player[1].color = CL_BLUE;
+    m_gamestate.player[0].color = COLOR_RGB(255, 0, 127);
+    m_gamestate.player[1].color = COLOR_RGB(127, 255, 0);
     m_main_state = STATE_WAITING_FOR_PLAYERS;
     return 0;
 }

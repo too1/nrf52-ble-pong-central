@@ -21,7 +21,7 @@ typedef enum
     ACTIVE_SCREEN_HALF_BOTTOM
 }active_screen_half_state_t;
 
-static led_matrix_buffer_t mbuff;
+static led_matrix_buffer_t mbuff[MATRIX_MULTI_DRAW];
 
 static void drv_led_start_spi_transfer()
 {   
@@ -82,25 +82,27 @@ static void drv_led_spi_event_handler_blue(nrfx_spim_evt_t const * p_event, void
  */
 static uint32_t drv_led_reset_spi_transfer_config()
 {   
+    static uint32_t multi_draw_index = 0;
     ret_code_t err_code;
     // SPI EasyDMA transfer flags
     uint8_t xfer_flags = NRFX_SPIM_FLAG_REPEATED_XFER | NRFX_SPIM_FLAG_HOLD_XFER | NRFX_SPIM_FLAG_TX_POSTINC;
     
     // Initiate Red buffer
-    nrfx_spim_xfer_desc_t xfer_red = NRFX_SPIM_XFER_TRX(&mbuff.r[0], MATRIX_BUFFER_WIDTH, NULL, 0);
+    nrfx_spim_xfer_desc_t xfer_red = NRFX_SPIM_XFER_TRX(&mbuff[multi_draw_index].r[0], MATRIX_BUFFER_WIDTH, NULL, 0);
     err_code = nrfx_spim_xfer(&spi_red_instance, &xfer_red, xfer_flags);
     VERIFY_SUCCESS(err_code);
-       
+   
     // Initiate Green buffer
-    nrfx_spim_xfer_desc_t xfer_green = NRFX_SPIM_XFER_TRX(&mbuff.g[0], MATRIX_BUFFER_WIDTH, NULL, 0);
+    nrfx_spim_xfer_desc_t xfer_green = NRFX_SPIM_XFER_TRX(&mbuff[multi_draw_index].g[0], MATRIX_BUFFER_WIDTH, NULL, 0);
     err_code = nrfx_spim_xfer(&spi_green_instance, &xfer_green, xfer_flags);
     VERIFY_SUCCESS(err_code);
-    
+
     // Initiate Blue buffer
-    nrfx_spim_xfer_desc_t xfer_blue = NRFX_SPIM_XFER_TRX(&mbuff.b[0], MATRIX_BUFFER_WIDTH, NULL, 0);
+    nrfx_spim_xfer_desc_t xfer_blue = NRFX_SPIM_XFER_TRX(&mbuff[multi_draw_index].b[0], MATRIX_BUFFER_WIDTH, NULL, 0);
     err_code = nrfx_spim_xfer(&spi_blue_instance, &xfer_blue, xfer_flags);
     VERIFY_SUCCESS(err_code);
-    
+
+    multi_draw_index = (multi_draw_index + 1) % MATRIX_MULTI_DRAW;
     return NRF_SUCCESS;
 }
 
@@ -181,7 +183,7 @@ static void drv_led_setup_latch_timer()
     NRF_TIMER1->MODE = TIMER_MODE_MODE_Timer << TIMER_MODE_MODE_Pos;
     NRF_TIMER1->BITMODE = TIMER_BITMODE_BITMODE_32Bit << TIMER_BITMODE_BITMODE_Pos;
     NRF_TIMER1->PRESCALER = 0;
-    NRF_TIMER1->CC[0] = 6000; 
+    NRF_TIMER1->CC[0] = 6000 / MATRIX_MULTI_DRAW; 
     NRF_TIMER1->SHORTS = TIMER_SHORTS_COMPARE0_CLEAR_Enabled << TIMER_SHORTS_COMPARE0_CLEAR_Pos;
     NRF_TIMER1->INTENSET = (TIMER_INTENSET_COMPARE0_Enabled << TIMER_INTENSET_COMPARE0_Pos);
     NVIC_EnableIRQ(TIMER1_IRQn);
@@ -250,32 +252,41 @@ uint32_t drv_led_matrix_draw_pixel(uint8_t x, uint8_t y, uint32_t color)
     {
         return NRF_ERROR_INVALID_PARAM;
     }
- 
-    if(color_red)
+    
+    for(int i = 0; i < MATRIX_MULTI_DRAW; i++)
     {
-        mbuff.r[y] |= (1ULL << x);
+        if(color_red > ((255 / (MATRIX_MULTI_DRAW + 1)) * (i + 1)))
+        {
+            mbuff[i].r[y] |= (1ULL << x);
+        }
+        else
+        {
+            mbuff[i].r[y] &= ~(1ULL << x);
+        }
     }
-    else
+    for(int i = 0; i < MATRIX_MULTI_DRAW; i++)
     {
-        mbuff.r[y] &= ~(1ULL << x);
-    }
-    if(color_green)
-    {
-        mbuff.g[y] |= (1ULL << x);
-    }
-    else
-    {
-        mbuff.g[y] &= ~(1ULL << x);
+        if(color_green > ((255 / (MATRIX_MULTI_DRAW + 1)) * (i + 1)))
+        {
+            mbuff[i].g[y] |= (1ULL << x);
+        }
+        else
+        {
+            mbuff[i].g[y] &= ~(1ULL << x);
+        }
     }
 #ifndef SAVE_CURRENT    
-    if(color_blue)
+    for(int i = 0; i < MATRIX_MULTI_DRAW; i++)
     {
-        mbuff.b[y] |= (1ULL << x);
+        if(color_blue > ((255 / (MATRIX_MULTI_DRAW + 1)) * (i + 1)))
+        {
+            mbuff[i].b[y] |= (1ULL << x);
+        }
+        else
+        {
+            mbuff[i].b[y] &= ~(1ULL << x);
+        }
     } 
-    else
-    {
-        mbuff.b[y] &= ~(1ULL << x);
-    }  
 #endif
 
     return NRF_SUCCESS;

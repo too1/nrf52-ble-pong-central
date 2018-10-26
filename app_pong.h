@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include "app_timer.h"
 
+#define COLOR_RGB(r, g, b)              (((r) & 0xFF) << 16 | ((g) & 0xFF) << 8 | ((b) & 0xFF))
 #define GAME_LOOP_UPDATE_MS             25
 #define GAME_LOOP_UPDATE_FREQ           (1000 / GAME_LOOP_UPDATE_MS)
 #define PONG_NUM_PLAYERS                2

@@ -122,7 +122,7 @@ void app_display_draw_text(char *text, uint32_t x, uint32_t y, uint32_t color, t
     uint32_t err_code = nrf_gfx_print(&m_led_matrix, &point, color, text, m_font, false);    
 }
 
-app_display_draw_int(int32_t value, uint32_t x, uint32_t y, uint32_t color, text_alignment_t alignment)
+void app_display_draw_int(int32_t value, uint32_t x, uint32_t y, uint32_t color, text_alignment_t alignment)
 {
     static char str_buf[9];
     int i = 0;
