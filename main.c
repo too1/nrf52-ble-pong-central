@@ -70,6 +70,7 @@
 #include "nrf_delay.h"
 #include "app_pong.h"
 #include "app_display.h"
+#include "app_ble_peripheral_manager.h"
 
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
@@ -369,34 +370,37 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
         // discovery, update LEDs status and resume scanning if necessary.
         case BLE_GAP_EVT_CONNECTED:
         {
-            NRF_LOG_INFO("Connection 0x%x established, starting DB discovery.",
-                         p_gap_evt->conn_handle);
-
-            APP_ERROR_CHECK_BOOL(p_gap_evt->conn_handle < NRF_SDH_BLE_CENTRAL_LINK_COUNT);
-
-            err_code = ble_thingy_uis_c_handles_assign(&m_thingy_uis_c[p_gap_evt->conn_handle], p_gap_evt->conn_handle, NULL);
-            APP_ERROR_CHECK(err_code);
-            
-            err_code = ble_thingy_tms_c_handles_assign(&m_thingy_tms_c[p_gap_evt->conn_handle], p_gap_evt->conn_handle, NULL);
-            APP_ERROR_CHECK(err_code);
-            
-            err_code = ble_thingy_tss_c_handles_assign(&m_thingy_tss_c[p_gap_evt->conn_handle], p_gap_evt->conn_handle, NULL);
-            APP_ERROR_CHECK(err_code);
-
-            thingy_under_discovery_conn_handle = p_gap_evt->conn_handle;
-            
-            err_code = ble_db_discovery_start(&m_db_disc[p_gap_evt->conn_handle],
-                                              p_gap_evt->conn_handle);
-            if (err_code != NRF_ERROR_BUSY)
+            if(p_ble_evt->evt.gap_evt.params.connected.role == BLE_GAP_ROLE_CENTRAL)
             {
-                APP_ERROR_CHECK(err_code);
-            }
+                NRF_LOG_INFO("Connection 0x%x established, starting DB discovery.",
+                             p_gap_evt->conn_handle);
 
-            // Update LEDs status, and check if we should be looking for more
-            // peripherals to connect to.
-            bsp_board_led_on(CENTRAL_CONNECTED_LED);
+                APP_ERROR_CHECK_BOOL(p_gap_evt->conn_handle < NRF_SDH_BLE_CENTRAL_LINK_COUNT);
+
+                err_code = ble_thingy_uis_c_handles_assign(&m_thingy_uis_c[p_gap_evt->conn_handle], p_gap_evt->conn_handle, NULL);
+                APP_ERROR_CHECK(err_code);
             
-            app_pong_controller_status_change(p_gap_evt->conn_handle, CONSTATE_CONNECTED);
+                err_code = ble_thingy_tms_c_handles_assign(&m_thingy_tms_c[p_gap_evt->conn_handle], p_gap_evt->conn_handle, NULL);
+                APP_ERROR_CHECK(err_code);
+            
+                err_code = ble_thingy_tss_c_handles_assign(&m_thingy_tss_c[p_gap_evt->conn_handle], p_gap_evt->conn_handle, NULL);
+                APP_ERROR_CHECK(err_code);
+
+                thingy_under_discovery_conn_handle = p_gap_evt->conn_handle;
+            
+                err_code = ble_db_discovery_start(&m_db_disc[p_gap_evt->conn_handle],
+                                                  p_gap_evt->conn_handle);
+                if (err_code != NRF_ERROR_BUSY)
+                {
+                    APP_ERROR_CHECK(err_code);
+                }
+
+                // Update LEDs status, and check if we should be looking for more
+                // peripherals to connect to.
+                bsp_board_led_on(CENTRAL_CONNECTED_LED);
+            
+                app_pong_controller_status_change(p_gap_evt->conn_handle, CONSTATE_CONNECTED);
+            }
         } break; // BLE_GAP_EVT_CONNECTED
 
         // Upon disconnection, reset the connection handle of the peer which disconnected, update
@@ -481,6 +485,8 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             // No implementation needed.
             break;
     }
+
+    ble_per_manager_on_ble_evt(p_ble_evt);
 }
 
 
@@ -785,6 +791,19 @@ static void perf_init(void)
 #endif
 }
 
+void peripheral_callback(ble_per_manager_event_t *event)
+{
+
+}
+
+
+static void peripheral_init(void)
+{
+    ble_per_manager_config_t config;
+    config.callback = peripheral_callback;
+    ble_per_manager_init(&config);
+}
+
 int main(void)
 {
     // Initialize.
@@ -807,11 +826,15 @@ int main(void)
     
     scan_start();
     
+    peripheral_init();
+
     pong_init();
 
     app_pong_start_game();
     
     app_display_init();
+
+    ble_per_manager_start_advertising();
     
     for (;;)
     {
