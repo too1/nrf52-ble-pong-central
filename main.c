@@ -709,7 +709,15 @@ static void app_pong_event_handler(pong_event_t *evt)
         case PONG_EVENT_PLAY_SOUND:
             ble_thingy_tss_spk_data_sample_send(&m_thingy_tss_c[evt->params.play_sound.controller_index], evt->params.play_sound.sample_id);
             break;
-        
+
+        case PONG_EVENT_POINT_SCORED:
+            ble_per_manager_on_point_scored(evt->params.point_scored.player_index);
+            break;
+
+        case PONG_EVENT_GAME_OVER:
+            ble_per_manager_on_game_over(evt->params.game_over.winner_index);
+            break;
+
         default:
             break;
     }
@@ -793,7 +801,22 @@ static void perf_init(void)
 
 void peripheral_callback(ble_per_manager_event_t *event)
 {
+    switch(event->evt_type)
+    {
+        case BLE_PER_MNG_EVT_CONNECTED:
+            NRF_LOG_INFO("Phone connected");
+            break;
 
+        case BLE_PER_MNG_EVT_DISCONNECTED:
+            NRF_LOG_INFO("Phone disconnected");
+            break;
+
+        case BLE_PER_MNG_EVT_DATA_RECEIVED:
+            NRF_LOG_INFO("Phone data received!!!!");
+            NRF_LOG_HEXDUMP_INFO(event->data_ptr, event->data_length);
+            app_pong_start_tournament_round(event->data_ptr + 1, event->data_length - 1);
+            break;
+    }
 }
 
 
@@ -828,12 +851,12 @@ int main(void)
     
     peripheral_init();
 
+    app_display_init();
+
     pong_init();
 
     app_pong_start_game();
     
-    app_display_init();
-
     ble_per_manager_start_advertising();
     
     for (;;)

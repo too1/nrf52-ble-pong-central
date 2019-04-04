@@ -17,7 +17,7 @@
 
 #define PADDLE_HEIGHT   8
 
-typedef enum {ALIGNMENT_LEFT, ALIGNMENT_CENTRE} text_alignment_t;
+typedef enum {ALIGNMENT_LEFT, ALIGNMENT_CENTRE, ALIGNMENT_RIGHT} text_alignment_t;
 
 void app_display_init(void);
 

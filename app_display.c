@@ -117,6 +117,11 @@ void app_display_draw_text(char *text, uint32_t x, uint32_t y, uint32_t color, t
             point.x = x - (get_text_width(text, m_font) / 2);
             point.y = y;        
             break;
+
+        case ALIGNMENT_RIGHT:
+            point.x = x - get_text_width(text, m_font);
+            point.y = y;
+            break;
     }
     //color = (color & 0xF8) << 8 | (color & 0xFC00) >> 5 | (color & 0xF80000) >> 19;
     uint32_t err_code = nrf_gfx_print(&m_led_matrix, &point, color, text, m_font, false);    

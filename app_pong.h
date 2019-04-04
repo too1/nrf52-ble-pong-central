@@ -26,7 +26,7 @@
 #define PONG_DIRECTION_UP               PI_3_2
 
 #define PONG_PREDELAY_TIME_S            5
-#define PONG_SCORE_LIMIT                5
+#define PONG_SCORE_LIMIT                3
 #define PONG_SPEED_INC_INTERVAL         10
 #define PONG_SPEED_REDUCTION_PR_BALL    1
 #define PONG_PADDLE_SPEED_TO_BALL_RATIO 30
@@ -54,6 +54,7 @@ typedef enum {CONSTATE_DISCONNECTED,    // Thingy disconnected
              }controller_state_t;
   
 typedef enum {STATE_WAITING_FOR_PLAYERS,
+              STATE_GAME_TOURNAMENT_ROUND_STARTING,
               STATE_GAME_START_NEW_GAME,
               STATE_GAME_START_PREDELAY,
               STATE_GAME_RUNNING,
@@ -69,6 +70,7 @@ typedef struct
     int32_t  paddle_pos_y_delta;
     uint32_t score;             // Current score of the player
     uint32_t color;             // The GUI color of the player
+    uint8_t  *name;             // Pointer to a string with the name of the player
 }pong_player_state_t;
 
 typedef struct
@@ -98,7 +100,11 @@ typedef struct
     pong_controller_state_t player[PONG_NUM_PLAYERS];
 }pong_global_control_state_t;
 
-typedef enum {PONG_EVENT_GAMESTATE_UPDATE, PONG_EVENT_CON_SET_COLOR, PONG_EVENT_PLAY_SOUND}pong_event_type_t;
+typedef enum {PONG_EVENT_GAMESTATE_UPDATE, 
+              PONG_EVENT_CON_SET_COLOR, 
+              PONG_EVENT_PLAY_SOUND,
+              PONG_EVENT_POINT_SCORED,
+              PONG_EVENT_GAME_OVER}pong_event_type_t;
     
 typedef struct 
 {
@@ -114,12 +120,24 @@ typedef struct
 
 typedef struct
 {
+    uint8_t player_index;
+}pong_event_param_point_scored_t;
+
+typedef struct
+{
+    uint8_t winner_index;
+}pong_event_param_game_over_t;
+
+typedef struct
+{
     pong_event_type_t evt_type;
     pong_gamestate_t *game_state;
     union
     {
         pong_event_param_con_set_color_t con_set_color;
         pong_event_param_play_sound_t    play_sound;
+        pong_event_param_point_scored_t  point_scored;
+        pong_event_param_game_over_t     game_over;
     }params;
 }pong_event_t;
 
@@ -133,6 +151,8 @@ typedef struct
 uint32_t app_pong_init(pong_config_t *config);
 
 uint32_t app_pong_start_game(void);
+
+uint32_t app_pong_start_tournament_round(uint8_t *init_buffer, uint32_t init_buffer_length);
 
 pong_controller_state_t *app_pong_get_controller(uint32_t index);
 

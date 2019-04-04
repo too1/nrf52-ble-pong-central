@@ -15,7 +15,7 @@
 #define DEVICE_NAME                     "nRF Pong!"                                 /**< Name of device. Will be included in the advertising data. */
 
 #define APP_ADV_INTERVAL                64                                          /**< The advertising interval (in units of 0.625 ms. This value corresponds to 40 ms). */
-#define APP_ADV_DURATION                18000                                       /**< The advertising duration (180 seconds) in units of 10 milliseconds. */
+#define APP_ADV_DURATION                0                                           /**< The advertising duration (180 seconds) in units of 10 milliseconds. */
 
 #define MIN_CONN_INTERVAL               MSEC_TO_UNITS(20, UNIT_1_25_MS)             /**< Minimum acceptable connection interval (20 ms), Connection interval uses 1.25 ms units. */
 #define MAX_CONN_INTERVAL               MSEC_TO_UNITS(75, UNIT_1_25_MS)             /**< Maximum acceptable connection interval (75 ms), Connection interval uses 1.25 ms units. */
@@ -34,7 +34,8 @@ static ble_uuid_t m_adv_uuids[]          =                                      
     {BLE_UUID_NUS_SERVICE, BLE_UUID_TYPE_VENDOR_BEGIN+1}
 };
 
-
+static ble_per_manager_event_t m_event;
+static ble_per_manager_callback_t m_callback = 0;
 
 /**@brief Function for handling advertising events.
  *
@@ -70,9 +71,23 @@ void ble_per_manager_on_ble_evt(ble_evt_t const * p_ble_evt)
         // Upon connection, check which peripheral has connected, initiate DB
         // discovery, update LEDs status and resume scanning if necessary.
         case BLE_GAP_EVT_CONNECTED:
-        {
+            m_event.evt_type = BLE_PER_MNG_EVT_CONNECTED;
+            m_event.data_length = 0;
+            if(m_callback)
+            {
+                m_callback(&m_event);
+            }
+            break;
 
-        }
+        case BLE_GAP_EVT_DISCONNECTED:
+            m_event.evt_type = BLE_PER_MNG_EVT_DISCONNECTED;
+            m_event.data_length = 0;
+            if(m_callback)
+            {
+                m_callback(&m_event);
+            }
+            break;
+            
     }
 }
 
@@ -118,7 +133,7 @@ static void advertising_init(void)
 
     init.advdata.name_type          = BLE_ADVDATA_FULL_NAME;
     init.advdata.include_appearance = false;
-    init.advdata.flags              = BLE_GAP_ADV_FLAGS_LE_ONLY_LIMITED_DISC_MODE;
+    init.advdata.flags              = BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE;
 
     init.srdata.uuids_complete.uuid_cnt = sizeof(m_adv_uuids) / sizeof(m_adv_uuids[0]);
     init.srdata.uuids_complete.p_uuids  = m_adv_uuids;
@@ -135,41 +150,26 @@ static void advertising_init(void)
 }
 
 
-/**@brief Function for handling the data from the Nordic UART Service.
- *
- * @details This function will process the data received from the Nordic UART BLE Service and send
- *          it to the UART module.
- *
- * @param[in] p_evt       Nordic UART Service event.
- */
+static uint8_t local_data_buf[244];
 static void nus_data_handler(ble_nus_evt_t * p_evt)
 {
-
-    if (p_evt->type == BLE_NUS_EVT_RX_DATA)
+    switch(p_evt->type)
     {
-        uint32_t err_code;
+        case BLE_NUS_EVT_COMM_STARTED:
+            m_conn_handle = p_evt->conn_handle;
+            break;
 
-        //NRF_LOG_DEBUG("Received data from BLE NUS. Writing data on UART.");
-        //NRF_LOG_HEXDUMP_DEBUG(p_evt->params.rx_data.p_data, p_evt->params.rx_data.length);
-
-        for (uint32_t i = 0; i < p_evt->params.rx_data.length; i++)
-        {
-            do
+        case BLE_NUS_EVT_RX_DATA:
+            memcpy(local_data_buf, p_evt->params.rx_data.p_data, p_evt->params.rx_data.length);
+            m_event.evt_type = BLE_PER_MNG_EVT_DATA_RECEIVED;
+            m_event.data_ptr = local_data_buf;
+            m_event.data_length = p_evt->params.rx_data.length;
+            if(m_callback)
             {
-                err_code = app_uart_put(p_evt->params.rx_data.p_data[i]);
-                if ((err_code != NRF_SUCCESS) && (err_code != NRF_ERROR_BUSY))
-                {
-                    //NRF_LOG_ERROR("Failed receiving NUS message. Error 0x%x. ", err_code);
-                    APP_ERROR_CHECK(err_code);
-                }
-            } while (err_code == NRF_ERROR_BUSY);
-        }
-        if (p_evt->params.rx_data.p_data[p_evt->params.rx_data.length - 1] == '\r')
-        {
-            while (app_uart_put('\n') == NRF_ERROR_BUSY);
-        }
+                m_callback(&m_event);
+            }
+            break;
     }
-
 }
 
 
@@ -210,6 +210,7 @@ static void services_init(void)
 
 void ble_per_manager_init(ble_per_manager_config_t *config)
 {
+    m_callback = config->callback;
     gap_params_init();
     services_init();
     advertising_init();
@@ -221,4 +222,22 @@ void ble_per_manager_start_advertising(void)
     APP_ERROR_CHECK(err_code);
 }
 
+void ble_per_manager_on_point_scored(uint8_t player_index)
+{
+    uint16_t length;
+    uint8_t data_buf[2];
+    data_buf[0] = BLE_PER_MNG_TX_CMD_POINT_SCORED;
+    data_buf[1] = player_index;
+    length = 2;
+    ble_nus_data_send(&m_nus, data_buf, &length, m_conn_handle);
+}
 
+void ble_per_manager_on_game_over(uint8_t winner_index)
+{
+    uint16_t length;
+    uint8_t data_buf[2];
+    data_buf[0] = BLE_PER_MNG_TX_CMD_GAME_OVER;
+    data_buf[1] = winner_index;
+    length = 2;
+    ble_nus_data_send(&m_nus, data_buf, &length, m_conn_handle);
+}

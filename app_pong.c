@@ -47,6 +47,13 @@ static void set_main_state(uint32_t new_state)
         case STATE_GAME_START_NEW_GAME:
             reset_game();
             break;
+
+        case STATE_GAME_TOURNAMENT_ROUND_STARTING:
+            app_display_draw_text("Get ready...", 28, 1, CL_BLUE, ALIGNMENT_CENTRE);
+            app_display_draw_text(m_gamestate.player[0].name, 1, 11, m_gamestate.player[0].color, ALIGNMENT_LEFT);
+            app_display_draw_text("vs", 63, 12, CL_WHITE, ALIGNMENT_RIGHT);
+            app_display_draw_text(m_gamestate.player[1].name, 52,21, m_gamestate.player[1].color, ALIGNMENT_RIGHT);
+            break;
             
         case STATE_GAME_START_PREDELAY:
             app_display_draw_square(4, 0, 56, 32, CL_BLACK);
@@ -79,6 +86,20 @@ static void play_sound(uint32_t con_index, pong_sound_sample_t sample_id)
     m_pong_event.game_state = &m_gamestate;
     m_pong_event.params.play_sound.controller_index = con_index;
     m_pong_event.params.play_sound.sample_id = sample_id;
+    m_event_callback(&m_pong_event);
+}
+
+static void on_point_scored(uint8_t player_id)
+{
+    m_pong_event.evt_type = PONG_EVENT_POINT_SCORED;
+    m_pong_event.params.point_scored.player_index = player_id;
+    m_event_callback(&m_pong_event);
+}
+
+static void on_game_over(uint8_t player_id)
+{
+    m_pong_event.evt_type = PONG_EVENT_GAME_OVER;
+    m_pong_event.params.game_over.winner_index = player_id;
     m_event_callback(&m_pong_event);
 }
 
@@ -120,6 +141,7 @@ static void reset_ball(uint32_t player_scored_index)
        if(m_gamestate.player[i].score >= PONG_SCORE_LIMIT)
        {
            winning_player = i;
+           on_game_over((uint8_t)winning_player);
        }
     }
     if(winning_player == 0xFFFF)
@@ -191,6 +213,7 @@ static void update_game_running(void)
             // The ball missed. Increment score and reset ball
             play_sound(0, SOUND_SAMPLE_COLLECT_POINT_B);
             play_sound(1, SOUND_SAMPLE_EXPLOSION_B);
+            on_point_scored(0);
             m_gamestate.player[0].score++;
             reset_ball(0);
         }
@@ -211,6 +234,7 @@ static void update_game_running(void)
             // The ball missed. Increment score and reset ball
             play_sound(0, SOUND_SAMPLE_EXPLOSION_B);
             play_sound(1, SOUND_SAMPLE_COLLECT_POINT_B);
+            on_point_scored(1);
             m_gamestate.player[1].score++;
             reset_ball(1);
         }     
@@ -250,6 +274,14 @@ static void update_game_loop(void *p)
     switch(m_main_state)
     {
         case STATE_WAITING_FOR_PLAYERS:
+            break;
+
+        case STATE_GAME_TOURNAMENT_ROUND_STARTING:
+            if(m_global_control_state.player[0].button_pressed && 
+               m_global_control_state.player[1].button_pressed)
+            {
+                set_main_state(STATE_GAME_START_PREDELAY);
+            }
             break;
             
         case STATE_GAME_START_NEW_GAME:
@@ -303,6 +335,37 @@ uint32_t app_pong_start_game(void)
 {
     if(!m_game_initialized) return -1;
     app_timer_start(m_game_loop_timer_id, APP_TIMER_TICKS(GAME_LOOP_UPDATE_MS), 0);
+    return 0;
+}
+
+uint32_t app_pong_start_tournament_round(uint8_t *init_buffer, uint32_t init_buffer_length)
+{
+    static uint8_t player1_name_buf[17], player2_name_buf[17];
+    int i;
+    if(!m_game_initialized) return -1;
+    if(m_main_state != STATE_WAITING_FOR_PLAYERS) return -1;
+    m_gamestate.player[0].color = (uint32_t)*init_buffer++ << 16 | 
+                                  (uint32_t)*init_buffer++ << 8 | 
+                                  (uint32_t)*init_buffer++;
+    for(i = 0; i < 15; i++)
+    {
+        player1_name_buf[i] = *init_buffer;
+        if(*init_buffer++ == 0) break;
+    }
+    player1_name_buf[i + 1] = 0;
+    m_gamestate.player[0].name = player1_name_buf;
+
+    m_gamestate.player[1].color = (uint32_t)*init_buffer++ << 16 | 
+                                  (uint32_t)*init_buffer++ << 8 | 
+                                  (uint32_t)*init_buffer++;
+    for(i = 0; i < 15; i++)
+    {
+        player2_name_buf[i] = *init_buffer;
+        if(*init_buffer++ == 0) break;
+    }
+    player2_name_buf[i + 1] = 0;
+    m_gamestate.player[1].name = player2_name_buf;
+    set_main_state(STATE_GAME_TOURNAMENT_ROUND_STARTING);
     return 0;
 }
 
@@ -367,11 +430,11 @@ void app_pong_controller_status_change(uint16_t conn_handle, controller_state_t 
                }                
             }
             // Check if both players are active, and start the game if true
-            if(m_gamestate.player[0].connected_state == CONSTATE_ACTIVE && 
+            /*if(m_gamestate.player[0].connected_state == CONSTATE_ACTIVE && 
                m_gamestate.player[1].connected_state == CONSTATE_ACTIVE)
             {
                 set_main_state(STATE_GAME_START_NEW_GAME);
-            }
+            }*/
             break;
     }
 }
@@ -398,7 +461,14 @@ void app_pong_draw_display(void)
             app_display_draw_text("for", 32, 11, CL_BLUE, ALIGNMENT_CENTRE);
             app_display_draw_text("players", 32, 20, CL_BLUE, ALIGNMENT_CENTRE);
             break;
-            
+
+        case STATE_GAME_TOURNAMENT_ROUND_STARTING:
+            app_display_draw_square(0, 12, 56, 24, CL_BLACK);
+            if(m_gamestate.player[0].connected_state == CONSTATE_ACTIVE || blink_fast) app_display_draw_text(m_gamestate.player[0].name, 1, 11, m_gamestate.player[0].color, ALIGNMENT_LEFT);
+            app_display_draw_text("vs", 63, 12, CL_WHITE, ALIGNMENT_RIGHT);
+            if(m_gamestate.player[1].connected_state == CONSTATE_ACTIVE || blink_fast) app_display_draw_text(m_gamestate.player[1].name, 52,21, m_gamestate.player[1].color, ALIGNMENT_RIGHT);
+            break;
+
         case STATE_GAME_START_PREDELAY:
             app_display_draw_text("Get ready", 32, 2, CL_WHITE, ALIGNMENT_CENTRE);
             app_display_draw_square(20, 12, 20, 20, CL_BLACK);
