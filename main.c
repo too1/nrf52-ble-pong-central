@@ -710,6 +710,10 @@ static void app_pong_event_handler(pong_event_t *evt)
             ble_thingy_tss_spk_data_sample_send(&m_thingy_tss_c[evt->params.play_sound.controller_index], evt->params.play_sound.sample_id);
             break;
 
+        case PONG_EVENT_GAME_STARTED:
+            ble_per_manager_on_game_started(0);
+            break;
+
         case PONG_EVENT_POINT_SCORED:
             ble_per_manager_on_point_scored(evt->params.point_scored.player_index);
             break;

@@ -49,6 +49,7 @@ static void set_main_state(uint32_t new_state)
             break;
 
         case STATE_GAME_TOURNAMENT_ROUND_STARTING:
+            reset_game();
             app_display_draw_text("Get ready...", 28, 1, CL_BLUE, ALIGNMENT_CENTRE);
             app_display_draw_text(m_gamestate.player[0].name, 1, 11, m_gamestate.player[0].color, ALIGNMENT_LEFT);
             app_display_draw_text("vs", 63, 12, CL_WHITE, ALIGNMENT_RIGHT);
@@ -79,6 +80,18 @@ static uint8_t get_random_number(void)
     return ret_val;
 }
 
+static void on_set_thingy_color(uint32_t thingy_index, uint32_t color)
+{
+    if(m_gamestate.player[thingy_index].connected_state == CONSTATE_ACTIVE)
+    {
+        m_pong_event.evt_type = PONG_EVENT_CON_SET_COLOR;
+        m_pong_event.game_state = &m_gamestate;
+        m_pong_event.params.con_set_color.color = color;
+        m_pong_event.params.con_set_color.conn_handle = m_gamestate.player[thingy_index].con_handle;
+        m_event_callback(&m_pong_event);
+    }
+}
+
 static void play_sound(uint32_t con_index, pong_sound_sample_t sample_id)
 {
     // Send event back to the application to play the sound
@@ -86,6 +99,12 @@ static void play_sound(uint32_t con_index, pong_sound_sample_t sample_id)
     m_pong_event.game_state = &m_gamestate;
     m_pong_event.params.play_sound.controller_index = con_index;
     m_pong_event.params.play_sound.sample_id = sample_id;
+    m_event_callback(&m_pong_event);
+}
+
+static void on_game_started()
+{
+    m_pong_event.evt_type = PONG_EVENT_GAME_STARTED;
     m_event_callback(&m_pong_event);
 }
 
@@ -343,7 +362,7 @@ uint32_t app_pong_start_tournament_round(uint8_t *init_buffer, uint32_t init_buf
     static uint8_t player1_name_buf[17], player2_name_buf[17];
     int i;
     if(!m_game_initialized) return -1;
-    if(m_main_state != STATE_WAITING_FOR_PLAYERS) return -1;
+    if(!(m_main_state == STATE_WAITING_FOR_PLAYERS || m_main_state == STATE_GAME_SCORE_LIMIT_REACHED)) return -1;
     m_gamestate.player[0].color = (uint32_t)*init_buffer++ << 16 | 
                                   (uint32_t)*init_buffer++ << 8 | 
                                   (uint32_t)*init_buffer++;
@@ -354,6 +373,7 @@ uint32_t app_pong_start_tournament_round(uint8_t *init_buffer, uint32_t init_buf
     }
     player1_name_buf[i + 1] = 0;
     m_gamestate.player[0].name = player1_name_buf;
+    on_set_thingy_color(0, m_gamestate.player[0].color);
 
     m_gamestate.player[1].color = (uint32_t)*init_buffer++ << 16 | 
                                   (uint32_t)*init_buffer++ << 8 | 
@@ -365,6 +385,8 @@ uint32_t app_pong_start_tournament_round(uint8_t *init_buffer, uint32_t init_buf
     }
     player2_name_buf[i + 1] = 0;
     m_gamestate.player[1].name = player2_name_buf;
+    on_set_thingy_color(1, m_gamestate.player[1].color);
+    on_game_started();
     set_main_state(STATE_GAME_TOURNAMENT_ROUND_STARTING);
     return 0;
 }
@@ -421,11 +443,7 @@ void app_pong_controller_status_change(uint16_t conn_handle, controller_state_t 
                    m_gamestate.player[i].connected_state = CONSTATE_ACTIVE;
                    
                    // Send a callback to update the color on the connected controller to the player color
-                   m_pong_event.evt_type = PONG_EVENT_CON_SET_COLOR;
-                   m_pong_event.game_state = &m_gamestate;
-                   m_pong_event.params.con_set_color.color = m_gamestate.player[i].color;
-                   m_pong_event.params.con_set_color.conn_handle = conn_handle;
-                   m_event_callback(&m_pong_event);
+                   on_set_thingy_color(i, m_gamestate.player[i].color);
                    break;
                }                
             }

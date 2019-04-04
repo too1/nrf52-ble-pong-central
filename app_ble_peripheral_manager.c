@@ -222,6 +222,16 @@ void ble_per_manager_start_advertising(void)
     APP_ERROR_CHECK(err_code);
 }
 
+void ble_per_manager_on_game_started(uint8_t game_handle)
+{
+    uint16_t length;
+    uint8_t data_buf[2];
+    data_buf[0] = BLE_PER_MNG_TX_CMD_GAME_STARTED;
+    data_buf[1] = game_handle;
+    length = 2;
+    ble_nus_data_send(&m_nus, data_buf, &length, m_conn_handle);    
+}
+
 void ble_per_manager_on_point_scored(uint8_t player_index)
 {
     uint16_t length;

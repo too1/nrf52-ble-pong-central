@@ -11,6 +11,7 @@ typedef enum {BLE_PER_MNG_EVT_CONNECTED,
 
 typedef enum {BLE_PER_MNG_TX_CMD_POINT_SCORED = 1, 
               BLE_PER_MNG_TX_CMD_GAME_OVER, 
+              BLE_PER_MNG_TX_CMD_GAME_STARTED,
               } ble_per_manager_tx_command_t;
 
 typedef struct
@@ -32,6 +33,8 @@ void ble_per_manager_init(ble_per_manager_config_t *config);
 void ble_per_manager_start_advertising(void);
 
 void ble_per_manager_on_ble_evt(ble_evt_t const * p_ble_evt);
+
+void ble_per_manager_on_game_started(uint8_t game_handle);
 
 void ble_per_manager_on_point_scored(uint8_t player_index);
 

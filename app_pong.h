@@ -103,6 +103,7 @@ typedef struct
 typedef enum {PONG_EVENT_GAMESTATE_UPDATE, 
               PONG_EVENT_CON_SET_COLOR, 
               PONG_EVENT_PLAY_SOUND,
+              PONG_EVENT_GAME_STARTED,
               PONG_EVENT_POINT_SCORED,
               PONG_EVENT_GAME_OVER}pong_event_type_t;
     
