@@ -25,7 +25,8 @@
 #define PONG_DIRECTION_LEFT             PI
 #define PONG_DIRECTION_UP               PI_3_2
 
-#define PONG_PREDELAY_TIME_S            5
+#define PONG_PREDELAY_TIME_S            4
+#define PONG_POINT_SCORED_SHOW_TIME_S   3
 #define PONG_SCORE_LIMIT                3
 #define PONG_SPEED_INC_INTERVAL         10
 #define PONG_SPEED_REDUCTION_PR_BALL    1
@@ -58,6 +59,7 @@ typedef enum {STATE_WAITING_FOR_PLAYERS,
               STATE_GAME_START_NEW_GAME,
               STATE_GAME_START_PREDELAY,
               STATE_GAME_RUNNING,
+              STATE_GAME_POINT_SCORED,
               STATE_GAME_SCORE_LIMIT_REACHED,
       
              }pong_main_state_t;

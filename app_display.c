@@ -7,6 +7,9 @@
 
 static nrf_lcd_t m_led_matrix = GFX_LED_DRV_MATRIX;
 
+static app_display_text_view_t * m_text_view_list[TEXT_VIEW_MAX_NUM];
+static uint32_t                  m_text_view_num = 0;
+
 void app_display_init(void)
 {
     uint32_t err_code;
@@ -100,6 +103,79 @@ uint32_t get_text_width(char *text, const nrf_gfx_font_desc_t * p_font)
         text++;
     }
     return text_width;
+}
+
+void app_display_text_view_add(app_display_text_view_t *text_view)
+{
+    if(m_text_view_num < TEXT_VIEW_MAX_NUM)
+    {
+        text_view->invalidate = true;
+        text_view->pos_offset_x = 0;
+        text_view->pos_offset_y = 0;
+        text_view->pos_last_drawn_x = POS_INVALID;
+        m_text_view_list[m_text_view_num++] = text_view;
+    }
+}
+
+
+void app_display_text_view_set_color(app_display_text_view_t *text_view, uint32_t color)
+{
+    if(color != text_view->color)
+    {
+        text_view->color = color;
+        text_view->invalidate = true;
+    }
+}
+
+void app_display_text_view_set_text(app_display_text_view_t *text_view, char *text)
+{
+    text_view->string = text;
+    text_view->invalidate = true;
+}
+
+void app_display_text_view_set_pos(app_display_text_view_t *text_view, uint32_t x, uint32_t y)
+{
+    if(text_view->pos_x != x || text_view->pos_y != y)
+    {
+        text_view->pos_x = x;
+        text_view->pos_y = y;
+        text_view->invalidate = true;
+    }
+}
+
+void app_display_text_view_set_offset(app_display_text_view_t *text_view, int32_t offset_x, int32_t offset_y)
+{
+    if(text_view->pos_offset_x != offset_x || text_view->pos_offset_y != offset_y)
+    {
+        text_view->pos_offset_x = offset_x;
+        text_view->pos_offset_y = offset_y;
+        text_view->invalidate = true;
+    }
+}
+
+void app_display_text_view_invalidate_all(void)
+{
+    for(int i = 0; i < m_text_view_num; i++)
+    {
+        m_text_view_list[i]->invalidate = true;
+    }
+}
+
+void app_display_text_view_draw(app_display_text_view_t *text_view, bool clear_last_drawn)
+{
+    if(text_view->invalidate)
+    {
+        //uint32_t new_x = (uint32_t)x;
+        //uint32_t new_y = (uint32_t)y;
+        text_view->invalidate = false;
+        if(clear_last_drawn && text_view->pos_last_drawn_x != POS_INVALID)
+        {
+            app_display_draw_text(text_view->string, text_view->pos_last_drawn_x, text_view->pos_last_drawn_y, CL_BLACK, text_view->alignment);
+        }
+        app_display_draw_text(text_view->string, text_view->pos_x + text_view->pos_offset_x, text_view->pos_y + text_view->pos_offset_y, text_view->color, text_view->alignment);
+        text_view->pos_last_drawn_x = text_view->pos_x + text_view->pos_offset_x;
+        text_view->pos_last_drawn_y = text_view->pos_y + text_view->pos_offset_y;
+    }
 }
 
 void app_display_draw_text(char *text, uint32_t x, uint32_t y, uint32_t color, text_alignment_t alignment)

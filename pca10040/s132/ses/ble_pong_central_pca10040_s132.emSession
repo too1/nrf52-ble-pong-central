@@ -1,16 +1,13 @@
 <!DOCTYPE CrossStudio_Session_File>
 <session>
  <Bookmarks/>
- <Breakpoints groups="Breakpoints" active_group="Breakpoints">
-  <BreakpointListItem trigger="" line="155" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="2" filename="../../../app_ble_peripheral_manager.c" useHWbreakpoint="false"/>
-  <Exceptions set="MemManage;UsageFault_Coprocessor;UsageFault_CheckingError;UsageFault_StateError;BusFault;ExceptionEntryReturnFault;HardFault"/>
- </Breakpoints>
+ <Breakpoints groups="Breakpoints" active_group="Breakpoints"/>
  <ExecutionProfileWindow/>
  <FrameBufferWindow>
   <FrameBufferWindow bufferHeight="-1" addressSpace="" addressText="" bufferWidth="-1"/>
  </FrameBufferWindow>
  <Memory1>
-  <MemoryWindow addressSpace="" dataSize="1" autoEvaluate="0" viewMode="0" addressOrder="0" columnsText="" refreshPeriod="0" name="ble_app_multilink_central_pca10040_s132" radix="16" sizeText="12" addressText="text"/>
+  <MemoryWindow addressSpace="" dataSize="1" autoEvaluate="0" viewMode="0" addressOrder="0" columnsText="" refreshPeriod="0" name="ble_app_multilink_central_pca10040_s132" radix="16" sizeText="sizeof data_ptr" addressText="&amp;data_ptr"/>
  </Memory1>
  <Memory2>
   <MemoryWindow addressSpace="" dataSize="1" autoEvaluate="0" viewMode="0" addressOrder="0" columnsText="" refreshPeriod="0" name="ble_app_multilink_central_pca10040_s132" radix="16" sizeText="" addressText=""/>
@@ -57,13 +54,20 @@
  </TraceWindow>
  <Watch1>
   <Watches active="1" update="Never">
-   <Watchpoint numelements="0" expression="(*p_evt).params.discovered_db" evalMode="0" name="discovered_db" radix="16" linenumber="310" filename="../../../ble_thingy_client/ble_thingy_tms_c.c" list=""/>
-   <Watchpoint numelements="0" expression="p_evt" evalMode="1" name="p_evt" radix="16" linenumber="298" filename="../../../ble_thingy_client/ble_thingy_tms_c.c" list=""/>
-   <Watchpoint numelements="0" expression="p_char" evalMode="0" name="p_char" radix="16" linenumber="335" filename="../../../ble_thingy_client/ble_thingy_tms_c.c" list=""/>
-   <Watchpoint numelements="0" expression="p_ble_thingy_tms_c" evalMode="1" name="p_ble_thingy_tms_c" radix="-1" linenumber="564" filename="../../../ble_thingy_client/ble_thingy_tms_c.c" list=""/>
-   <Watchpoint numelements="0" expression="gamestate" evalMode="0" name="gamestate" radix="16" linenumber="642" filename="../../../main.c" list=""/>
-   <Watchpoint numelements="0" expression="pong_screen_x" evalMode="0" name="pong_screen_x" radix="16" linenumber="659" filename="../../../main.c" list=""/>
-   <Watchpoint numelements="0" expression="point" evalMode="0" name="point" radix="-1" linenumber="117" filename="../../../app_display.c" list=""/>
+   <Watchpoint expression="(*p_evt).params.discovered_db" name="discovered_db" radix="16" linenumber="310" filename="../../../ble_thingy_client/ble_thingy_tms_c.c"/>
+   <Watchpoint expression="p_evt" name="p_evt" radix="16" linenumber="298" filename="../../../ble_thingy_client/ble_thingy_tms_c.c"/>
+   <Watchpoint expression="p_char" name="p_char" radix="16" linenumber="335" filename="../../../ble_thingy_client/ble_thingy_tms_c.c"/>
+   <Watchpoint expression="p_ble_thingy_tms_c" name="p_ble_thingy_tms_c" radix="-1" linenumber="564" filename="../../../ble_thingy_client/ble_thingy_tms_c.c"/>
+   <Watchpoint expression="gamestate" name="gamestate" radix="16" linenumber="642" filename="../../../main.c"/>
+   <Watchpoint expression="pong_screen_x" name="pong_screen_x" radix="16" linenumber="659" filename="../../../main.c"/>
+   <Watchpoint expression="point" name="point" radix="-1" linenumber="186" filename="../../../app_display.c"/>
+   <Watchpoint expression="event" name="event" radix="-1" linenumber="806" filename="../../../main.c"/>
+   <Watchpoint expression="*init_buffer" name="init_buffer" radix="16" linenumber="403" filename="../../../app_pong.c"/>
+   <Watchpoint expression="&amp;local_data_buf" name="&amp;local_data_buf" radix="-1" linenumber="0" filename="../ses"/>
+   <Watchpoint expression="m_event" name="m_event" radix="-1" linenumber="174" filename="../../../app_ble_peripheral_manager.c"/>
+   <Watchpoint expression="player2_name_buf" name="player2_name_buf" radix="-1" linenumber="431" filename="../../../app_pong.c"/>
+   <Watchpoint expression="player1_name_buf" name="player1_name_buf" radix="-1" linenumber="417" filename="../../../app_pong.c"/>
+   <Watchpoint expression="m_gamestate" name="m_gamestate" radix="-1" linenumber="439" filename="../../../app_pong.c"/>
   </Watches>
  </Watch1>
  <Watch2>
@@ -76,18 +80,21 @@
   <Watches active="0" update="Never"/>
  </Watch4>
  <Files>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="807" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../main.c" selected="1" top="745" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="30" y="820" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../main.c" selected="0" top="780" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="11472" useTextEdit="1" useBinaryEdit="0" left="0" path="../config/sdk_config.h" selected="0" top="11406" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="14" y="168" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../app_ble_peripheral_manager.c" selected="0" top="118" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="73" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/ble/ble_advertising/ble_advertising.h" selected="0" top="21" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="63" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/softdevice/common/nrf_sdh_soc.c" selected="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="138" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/libraries/fstorage/nrf_fstorage_sd.c" selected="0" top="62" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="547" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../integration/nrfx/legacy/nrf_drv_clock.c" selected="0" top="469" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="5" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../app_ble_peripheral_manager.h" selected="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="98" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/libraries/util/app_error_weak.c" selected="0" top="63" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="36" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../app_ble_peripheral_manager.h" selected="0" top="0" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="221" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/softdevice/s132/headers/ble.h" selected="0" top="177" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="189" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/softdevice/s132/headers/ble_gap.h" selected="0" top="126" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="363" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../ble_pong_app_service/ble_pas.c" selected="0" top="306" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="410" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../ble_pong_app_service/ble_pas.c" selected="0" top="375" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="157" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../ble_pong_app_service/ble_pas.h" selected="0" top="115" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="190" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/libraries/experimental_log/nrf_log.h" selected="0" top="149" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="42" y="30" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../app_pong.h" selected="0" top="68" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="144" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../app_display.c" selected="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="224" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../app_ble_peripheral_manager.c" selected="0" top="116" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="35" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../app_display.h" selected="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="48" y="580" useTextEdit="1" useBinaryEdit="0" left="3" path="../../../app_pong.c" selected="1" top="518" codecName="Default"/>
  </Files>
- <ARMCrossStudioWindow activeProject="ble_app_multilink_central_pca10040_s132" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Release" debugSearchFileMap="C:/Nordic Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/drivers/src/nrfx_clock.c&#xa;&#xa;C:/Nordic Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/drivers/src/nrfx_gpiote.c&#xa;&#xa;C:/Nordic Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/mdk/ses_nrf52_Vectors.s&#xa;&#xa;C:/Nordic Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/mdk/ses_nRF_Startup.s&#xa;&#xa;C:/Nordic_Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/drivers/src/nrfx_clock.c&#xa;&#xa;C:/Nordic_Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/drivers/src/nrfx_gpiote.c&#xa;&#xa;C:/Nordic_Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/mdk/ses_nrf52_Vectors.s&#xa;&#xa;C:/Nordic_Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/mdk/ses_nRF_Startup.s&#xa;" fileDialogInitialDirectory="C:/Nordic_Semiconductor/nRF5_SDK_15.0.0_a53641a/components/ble/nrf_ble_qwr" debugSearchPath="" autoConnectCapabilities="3711"/>
+ <ARMCrossStudioWindow activeProject="ble_app_multilink_central_pca10040_s132" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Release" sessionSettings="" debugSearchFileMap="C:/Nordic Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/drivers/src/nrfx_clock.c&#xa;&#xa;C:/Nordic Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/drivers/src/nrfx_gpiote.c&#xa;&#xa;C:/Nordic Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/mdk/ses_nrf52_Vectors.s&#xa;&#xa;C:/Nordic Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/mdk/ses_nRF_Startup.s&#xa;&#xa;C:/Nordic_Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/drivers/src/nrfx_clock.c&#xa;&#xa;C:/Nordic_Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/drivers/src/nrfx_gpiote.c&#xa;&#xa;C:/Nordic_Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/mdk/ses_nrf52_Vectors.s&#xa;&#xa;C:/Nordic_Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/mdk/ses_nRF_Startup.s&#xa;" fileDialogInitialDirectory="C:/Nordic_Semiconductor/nRF5_SDK_15.0.0_a53641a/components/ble/nrf_ble_qwr" debugSearchPath="" autoConnectCapabilities="3711"/>
 </session>
