@@ -287,10 +287,6 @@ void gs_waiting_for_players(state_mngr_t * context, state_ops_return_t * return_
             start_every_state(context->current_state);
             break;
 
-        case STATE_OP_UPDATE:
-
-            break;
-
         case STATE_OP_DRAW:
             paddle1_color = (m_gamestate.player[0].connected_state == CONSTATE_DISCONNECTED) ? CL_RED : m_gamestate.player[0].color;
             if(m_gamestate.player[0].connected_state != CONSTATE_ACTIVE && blink_fast) paddle1_color = CL_BLACK;
@@ -300,10 +296,6 @@ void gs_waiting_for_players(state_mngr_t * context, state_ops_return_t * return_
             app_display_draw_text("Waiting", 32, 2, CL_BLUE, ALIGNMENT_CENTRE);
             app_display_draw_text("for", 32, 11, CL_BLUE, ALIGNMENT_CENTRE);
             app_display_draw_text("players", 32, 20, CL_BLUE, ALIGNMENT_CENTRE);
-            break;
-
-        case STATE_OP_EXIT:
-
             break;
 
         default:
@@ -338,10 +330,6 @@ void gs_tournament_round_starting(state_mngr_t * context, state_ops_return_t * r
             if(m_gamestate.player[0].connected_state == CONSTATE_ACTIVE || blink_fast) app_display_text_view_draw(&m_textview_p1_name, true);
             app_display_text_view_draw(&m_textview_versus, false);
             if(m_gamestate.player[1].connected_state == CONSTATE_ACTIVE || blink_fast) app_display_text_view_draw(&m_textview_p2_name, true);
-            break;
-
-        case STATE_OP_EXIT:
-
             break;
 
         default:
