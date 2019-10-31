@@ -1,7 +1,9 @@
 <!DOCTYPE CrossStudio_Session_File>
 <session>
  <Bookmarks/>
- <Breakpoints groups="Breakpoints" active_group="Breakpoints"/>
+ <Breakpoints groups="Breakpoints" active_group="Breakpoints">
+  <Exceptions set="MemManage;UsageFault_Coprocessor;UsageFault_CheckingError;UsageFault_StateError;BusFault;ExceptionEntryReturnFault;HardFault"/>
+ </Breakpoints>
  <ExecutionProfileWindow/>
  <FrameBufferWindow>
   <FrameBufferWindow bufferHeight="-1" addressSpace="" addressText="" bufferWidth="-1"/>
@@ -62,12 +64,12 @@
    <Watchpoint expression="pong_screen_x" name="pong_screen_x" radix="16" linenumber="659" filename="../../../main.c"/>
    <Watchpoint expression="point" name="point" radix="-1" linenumber="186" filename="../../../app_display.c"/>
    <Watchpoint expression="event" name="event" radix="-1" linenumber="806" filename="../../../main.c"/>
-   <Watchpoint expression="*init_buffer" name="init_buffer" radix="16" linenumber="403" filename="../../../app_pong.c"/>
+   <Watchpoint expression="*init_buffer" name="init_buffer" radix="16" linenumber="612" filename="../../../app_pong.c"/>
    <Watchpoint expression="&amp;local_data_buf" name="&amp;local_data_buf" radix="-1" linenumber="0" filename="../ses"/>
    <Watchpoint expression="m_event" name="m_event" radix="-1" linenumber="174" filename="../../../app_ble_peripheral_manager.c"/>
-   <Watchpoint expression="player2_name_buf" name="player2_name_buf" radix="-1" linenumber="431" filename="../../../app_pong.c"/>
-   <Watchpoint expression="player1_name_buf" name="player1_name_buf" radix="-1" linenumber="417" filename="../../../app_pong.c"/>
-   <Watchpoint expression="m_gamestate" name="m_gamestate" radix="-1" linenumber="439" filename="../../../app_pong.c"/>
+   <Watchpoint expression="player2_name_buf" name="player2_name_buf" radix="-1" linenumber="640" filename="../../../app_pong.c"/>
+   <Watchpoint expression="player1_name_buf" name="player1_name_buf" radix="-1" linenumber="626" filename="../../../app_pong.c"/>
+   <Watchpoint expression="m_gamestate" name="m_gamestate" radix="-1" linenumber="649" filename="../../../app_pong.c"/>
   </Watches>
  </Watch1>
  <Watch2>
@@ -80,7 +82,7 @@
   <Watches active="0" update="Never"/>
  </Watch4>
  <Files>
-  <SessionOpenFile windowGroup="DockEditLeft" x="30" y="820" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../main.c" selected="0" top="780" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="836" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../main.c" selected="1" top="782" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="11472" useTextEdit="1" useBinaryEdit="0" left="0" path="../config/sdk_config.h" selected="0" top="11406" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="73" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/ble/ble_advertising/ble_advertising.h" selected="0" top="21" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="63" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/softdevice/common/nrf_sdh_soc.c" selected="0" top="0" codecName="Default"/>
@@ -90,11 +92,14 @@
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="410" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../ble_pong_app_service/ble_pas.c" selected="0" top="375" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="157" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../ble_pong_app_service/ble_pas.h" selected="0" top="115" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="190" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../../../../components/libraries/experimental_log/nrf_log.h" selected="0" top="149" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="42" y="30" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../app_pong.h" selected="0" top="68" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="144" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../app_display.c" selected="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="27" y="56" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../app_pong.h" selected="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="30" y="202" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../app_display.c" selected="0" top="139" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="224" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../app_ble_peripheral_manager.c" selected="0" top="116" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="35" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../app_display.h" selected="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="48" y="580" useTextEdit="1" useBinaryEdit="0" left="3" path="../../../app_pong.c" selected="1" top="518" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="14" y="199" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../app_pong.c" selected="0" top="189" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="553" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../display_driver/gfx_local_mod/nrf_gfx.c" selected="0" top="488" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="47" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../state_manager.c" selected="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="32" y="33" useTextEdit="1" useBinaryEdit="0" left="0" path="../../../state_manager.h" selected="0" top="0" codecName="Default"/>
  </Files>
- <ARMCrossStudioWindow activeProject="ble_app_multilink_central_pca10040_s132" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Release" sessionSettings="" debugSearchFileMap="C:/Nordic Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/drivers/src/nrfx_clock.c&#xa;&#xa;C:/Nordic Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/drivers/src/nrfx_gpiote.c&#xa;&#xa;C:/Nordic Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/mdk/ses_nrf52_Vectors.s&#xa;&#xa;C:/Nordic Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/mdk/ses_nRF_Startup.s&#xa;&#xa;C:/Nordic_Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/drivers/src/nrfx_clock.c&#xa;&#xa;C:/Nordic_Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/drivers/src/nrfx_gpiote.c&#xa;&#xa;C:/Nordic_Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/mdk/ses_nrf52_Vectors.s&#xa;&#xa;C:/Nordic_Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/mdk/ses_nRF_Startup.s&#xa;" fileDialogInitialDirectory="C:/Nordic_Semiconductor/nRF5_SDK_15.0.0_a53641a/components/ble/nrf_ble_qwr" debugSearchPath="" autoConnectCapabilities="3711"/>
+ <ARMCrossStudioWindow activeProject="ble_app_multilink_central_pca10040_s132" fileDialogDefaultFilter="" autoConnectTarget="J-Link" buildConfiguration="Release" sessionSettings="" debugSearchFileMap="C:/Nordic Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/drivers/src/nrfx_clock.c&#xa;&#xa;C:/Nordic Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/drivers/src/nrfx_gpiote.c&#xa;&#xa;C:/Nordic Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/mdk/ses_nrf52_Vectors.s&#xa;&#xa;C:/Nordic Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/mdk/ses_nRF_Startup.s&#xa;&#xa;C:/Nordic_Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/drivers/src/nrfx_clock.c&#xa;&#xa;C:/Nordic_Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/drivers/src/nrfx_gpiote.c&#xa;&#xa;C:/Nordic_Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/mdk/ses_nrf52_Vectors.s&#xa;&#xa;C:/Nordic_Semiconductor/nRF5_SDK_15.0.0_a53641a/modules/nrfx/mdk/ses_nRF_Startup.s&#xa;" fileDialogInitialDirectory="D:/Nordic_Semiconductor/nRF5_SDK_15.0.0_a53641a/examples/_too/nrf52-ble-pong-central" debugSearchPath="" autoConnectCapabilities="3711"/>
 </session>

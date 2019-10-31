@@ -54,7 +54,8 @@ typedef enum {CONSTATE_DISCONNECTED,    // Thingy disconnected
               CONSTATE_ACTIVE           // Thingy connected and services enabled
              }controller_state_t;
   
-typedef enum {STATE_WAITING_FOR_PLAYERS,
+typedef enum {STATE_INVALID, 
+              STATE_WAITING_FOR_PLAYERS,
               STATE_GAME_TOURNAMENT_ROUND_STARTING,
               STATE_GAME_START_NEW_GAME,
               STATE_GAME_START_PREDELAY,
