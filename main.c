@@ -110,6 +110,9 @@ static char const m_target_periph_name[] = "PongThin";             /**< Name of 
 
 static uint8_t m_scan_buffer_data[BLE_GAP_SCAN_BUFFER_MIN]; /**< buffer where advertising reports will be stored by the SoftDevice. */
 
+// Game config
+static bool  m_sound_enabled = false;
+
 /**@brief Pointer to the buffer where advertising reports will be stored by the SoftDevice. */
 static ble_data_t m_scan_buffer =
 {
@@ -707,7 +710,10 @@ static void app_pong_event_handler(pong_event_t *evt)
             break;
             
         case PONG_EVENT_PLAY_SOUND:
-            //ble_thingy_tss_spk_data_sample_send(&m_thingy_tss_c[evt->params.play_sound.controller_index], evt->params.play_sound.sample_id);
+            if(m_sound_enabled)
+            {
+                ble_thingy_tss_spk_data_sample_send(&m_thingy_tss_c[evt->params.play_sound.controller_index], evt->params.play_sound.sample_id);
+            }
             break;
 
         case PONG_EVENT_GAME_STARTED:
@@ -818,7 +824,17 @@ void peripheral_callback(ble_per_manager_event_t *event)
         case BLE_PER_MNG_EVT_DATA_RECEIVED:
             NRF_LOG_INFO("Phone data received!!!!");
             NRF_LOG_HEXDUMP_INFO(event->data_ptr, event->data_length);
-            app_pong_start_tournament_round(event->data_ptr + 1, event->data_length - 1);
+            switch(event->data_ptr[0])
+            {
+                case BLE_PER_MNG_RX_CMD_START_GAME:
+                    app_pong_start_tournament_round(event->data_ptr + 1, event->data_length - 1);
+                    break;
+
+                case BLE_PER_MNG_RX_CMD_SET_GAME_CONFIG:
+                    m_sound_enabled = (event->data_ptr[1] != 0);
+                    break;
+            }
+
             break;
     }
 }

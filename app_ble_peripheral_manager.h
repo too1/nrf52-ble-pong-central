@@ -14,6 +14,10 @@ typedef enum {BLE_PER_MNG_TX_CMD_POINT_SCORED = 1,
               BLE_PER_MNG_TX_CMD_GAME_STARTED,
               } ble_per_manager_tx_command_t;
 
+typedef enum {BLE_PER_MNG_RX_CMD_START_GAME = 1, 
+              BLE_PER_MNG_RX_CMD_SET_GAME_CONFIG, 
+              } ble_per_manager_rx_command_t;
+
 typedef struct
 {
     ble_per_manager_event_type_t evt_type;
