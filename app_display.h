@@ -38,6 +38,7 @@ typedef struct
     int32_t          pos_offset_y;
     int32_t          pos_last_drawn_x;
     int32_t          pos_last_drawn_y;
+    char            *last_drawn_string;
 } app_display_text_view_t;
 
 void app_display_init(void);

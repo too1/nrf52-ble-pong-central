@@ -6,6 +6,7 @@
 #include "nrf_sdh_ble.h"
 #include "nrf_ble_qwr.h"
 #include "ble_pas.h"
+#include "ble_gap.h"
 #include "ble_advdata.h"
 #include "ble_advertising.h"
 #include "app_util_platform.h"
@@ -71,11 +72,15 @@ void ble_per_manager_on_ble_evt(ble_evt_t const * p_ble_evt)
         // Upon connection, check which peripheral has connected, initiate DB
         // discovery, update LEDs status and resume scanning if necessary.
         case BLE_GAP_EVT_CONNECTED:
-            m_event.evt_type = BLE_PER_MNG_EVT_CONNECTED;
-            m_event.data_length = 0;
-            if(m_callback)
+            if(p_gap_evt->params.connected.role == BLE_GAP_ROLE_PERIPH)
             {
-                m_callback(&m_event);
+                m_conn_handle = p_gap_evt->conn_handle;
+                m_event.evt_type = BLE_PER_MNG_EVT_CONNECTED;
+                m_event.data_length = 0;
+                if(m_callback)
+                {
+                    m_callback(&m_event);
+                }
             }
             break;
 
@@ -119,6 +124,12 @@ static void gap_params_init(void)
 
     err_code = sd_ble_gap_ppcp_set(&gap_conn_params);
     APP_ERROR_CHECK(err_code);
+}
+
+
+bool ble_per_manager_is_connected(void)
+{
+    return m_conn_handle != BLE_CONN_HANDLE_INVALID;
 }
 
 
@@ -239,6 +250,17 @@ void ble_per_manager_on_point_scored(uint8_t player_index)
     data_buf[0] = BLE_PER_MNG_TX_CMD_POINT_SCORED;
     data_buf[1] = player_index;
     length = 2;
+    ble_nus_data_send(&m_nus, data_buf, &length, m_conn_handle);
+}
+
+void ble_per_manager_on_controller_state_change(bool c1_connected, bool c2_connected)
+{
+    uint16_t length;
+    uint8_t data_buf[3];
+    data_buf[0] = BLE_PER_MNG_TX_CMD_CONTROLLER_STATE;
+    data_buf[1] = c1_connected ? 1 : 0;
+    data_buf[2] = c2_connected ? 1 : 0;
+    length = 3;
     ble_nus_data_send(&m_nus, data_buf, &length, m_conn_handle);
 }
 

@@ -184,6 +184,15 @@ static void scan_start(void)
     bsp_board_led_on(CENTRAL_SCANNING_LED);
 }
 
+static void forward_controller_state_to_central(void)
+{
+    if(ble_per_manager_is_connected())
+    {
+        ble_per_manager_on_controller_state_change(m_thingy_uis_c[0].conn_handle != BLE_CONN_HANDLE_INVALID,
+                                                   m_thingy_uis_c[1].conn_handle != BLE_CONN_HANDLE_INVALID);
+    }
+}
+
 static uint16_t thingy_under_discovery_conn_handle = 0xFFFF;
 
 static void thingy_service_discovered(uint32_t service_mask)
@@ -403,6 +412,8 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
                 bsp_board_led_on(CENTRAL_CONNECTED_LED);
             
                 app_pong_controller_status_change(p_gap_evt->conn_handle, CONSTATE_CONNECTED);
+
+                forward_controller_state_to_central();
             }
         } break; // BLE_GAP_EVT_CONNECTED
 
@@ -430,6 +441,8 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             bsp_board_led_on(CENTRAL_SCANNING_LED);
             
             app_pong_controller_status_change(p_gap_evt->conn_handle, CONSTATE_DISCONNECTED);
+
+            forward_controller_state_to_central();
         } break;
 
         case BLE_GAP_EVT_ADV_REPORT:
@@ -815,6 +828,7 @@ void peripheral_callback(ble_per_manager_event_t *event)
     {
         case BLE_PER_MNG_EVT_CONNECTED:
             NRF_LOG_INFO("Phone connected");
+            forward_controller_state_to_central();
             break;
 
         case BLE_PER_MNG_EVT_DISCONNECTED:
@@ -828,6 +842,10 @@ void peripheral_callback(ble_per_manager_event_t *event)
             {
                 case BLE_PER_MNG_RX_CMD_START_GAME:
                     app_pong_start_tournament_round(event->data_ptr + 1, event->data_length - 1);
+                    break;
+
+                case BLE_PER_MNG_RX_CMD_RESET_PONG:
+                    NVIC_SystemReset();
                     break;
 
                 case BLE_PER_MNG_RX_CMD_SET_GAME_CONFIG:

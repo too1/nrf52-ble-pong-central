@@ -24,9 +24,11 @@ static struct {uint32_t paddle_pos_end[2]; uint32_t ball_x; uint32_t ball_y;
                uint32_t winning_player; bool game_over;} m_point_won_game_state;
 
 static app_display_text_view_t      m_textview_get_ready = {"Get ready ..", 28, 1, CL_BLUE, ALIGNMENT_CENTRE};
+static char * m_get_ready_string_list[] = {"Get ready", "Get ready", "press", "your", "buttons", ""};
 static app_display_text_view_t      m_textview_p1_name   = {"", 1, 11, CL_BLUE, ALIGNMENT_LEFT};
 static app_display_text_view_t      m_textview_p2_name   = {"", 52, 21, CL_BLUE, ALIGNMENT_RIGHT};
 static app_display_text_view_t      m_textview_versus    = {"vs", 63, 12, CL_WHITE, ALIGNMENT_RIGHT};
+static app_display_text_view_t      m_textview_countdown = {"0", 32, 14, CL_WHITE, ALIGNMENT_CENTRE};
 
 static state_t reset_game(void);
 static state_t reset_ball(uint32_t player_score_index);
@@ -53,6 +55,11 @@ static uint8_t get_random_number(void)
     uint8_t ret_val;
     sd_rand_application_vector_get(&ret_val, 1);
     return ret_val;
+}
+
+static int32_t get_int_sinus(uint32_t x, uint32_t xmax, int32_t out_min, int32_t out_max)
+{
+    return (int32_t)((sinf((float)x * 2*3.1415f / (float)xmax) + 1.0f) * 0.5f * (float)(out_max - out_min) + (float)out_min);
 }
 
 static void on_set_thingy_color(uint32_t thingy_index, uint32_t color)
@@ -305,11 +312,13 @@ void gs_waiting_for_players(state_mngr_t * context, state_ops_return_t * return_
 
 void gs_tournament_round_starting(state_mngr_t * context, state_ops_return_t * return_data)
 {
+    static uint32_t get_ready_text_index;
     uint32_t blink_fast = (context->lifetime >> 3) % 2;
     switch(context->current_op)
     {
         case STATE_OP_ENTER:
             start_every_state(context->current_state);
+            get_ready_text_index = 0;
             return_data->go_to_state = reset_game();
             //app_display_draw_text(m_gamestate.player[0].name, 1, 11, m_gamestate.player[0].color, ALIGNMENT_LEFT);
             app_display_draw_text("vs", 63, 12, CL_WHITE, ALIGNMENT_RIGHT);
@@ -325,11 +334,21 @@ void gs_tournament_round_starting(state_mngr_t * context, state_ops_return_t * r
             break;
 
         case STATE_OP_DRAW:
-            app_display_text_view_draw(&m_textview_get_ready, false);
-            app_display_text_view_set_offset(&m_textview_p1_name, ((context->lifetime / 5) % 8), 0);
-            if(m_gamestate.player[0].connected_state == CONSTATE_ACTIVE || blink_fast) app_display_text_view_draw(&m_textview_p1_name, true);
+            if((context->lifetime % 50) == 0){
+                app_display_draw_square(0, 0, 64, 12, CL_BLACK);
+                app_display_text_view_set_text(&m_textview_get_ready, m_get_ready_string_list[get_ready_text_index++]);
+                get_ready_text_index %= (sizeof(m_get_ready_string_list) / sizeof(m_get_ready_string_list[0]));
+                app_display_text_view_draw(&m_textview_get_ready, true);
+            }
+            //app_display_text_view_draw(&m_textview_get_ready, false);
+            
+            //app_display_text_view_set_offset(&m_textview_p1_name, get_int_sinus(context->lifetime % 100, 100, 0, 10), 0);
+            app_display_text_view_set_color(&m_textview_p1_name, (m_gamestate.player[0].connected_state == CONSTATE_ACTIVE && m_global_control_state.player[0].button_pressed) || blink_fast ? m_gamestate.player[0].color : CL_BLACK);
+            app_display_text_view_draw(&m_textview_p1_name, false);
             app_display_text_view_draw(&m_textview_versus, false);
-            if(m_gamestate.player[1].connected_state == CONSTATE_ACTIVE || blink_fast) app_display_text_view_draw(&m_textview_p2_name, true);
+            //app_display_text_view_set_offset(&m_textview_p2_name, get_int_sinus(context->lifetime % 140, 140, 0, 10), 0);
+            app_display_text_view_set_color(&m_textview_p2_name, (m_gamestate.player[1].connected_state == CONSTATE_ACTIVE && m_global_control_state.player[1].button_pressed) || blink_fast ? m_gamestate.player[1].color : CL_BLACK);
+            app_display_text_view_draw(&m_textview_p2_name, false);
             break;
 
         default:
@@ -357,6 +376,7 @@ void gs_start_new_game(state_mngr_t * context, state_ops_return_t * return_data)
 
 void gs_start_predelay(state_mngr_t * context, state_ops_return_t * return_data)
 {
+    static char *countdown_text[] = {"0", "1", "2", "3", "4", "5"};
     switch(context->current_op)
     {
         case STATE_OP_ENTER:
@@ -374,8 +394,9 @@ void gs_start_predelay(state_mngr_t * context, state_ops_return_t * return_data)
 
         case STATE_OP_DRAW:
             app_display_draw_text("Get ready", 32, 2, CL_WHITE, ALIGNMENT_CENTRE);
-            app_display_draw_square(20, 12, 20, 20, CL_BLACK);
-            app_display_draw_int(PONG_PREDELAY_TIME_S - (context->lifetime / GAME_LOOP_UPDATE_FREQ), 32, 14, CL_WHITE, ALIGNMENT_CENTRE);
+            //app_display_draw_square(20, 12, 20, 20, CL_BLACK);
+            app_display_text_view_set_text(&m_textview_countdown, countdown_text[PONG_PREDELAY_TIME_S - (context->lifetime / GAME_LOOP_UPDATE_FREQ)]);
+            app_display_text_view_draw(&m_textview_countdown, true);
             app_display_draw_paddles(m_gamestate.player[0].paddle_pos_y * 32 / LEVEL_SIZE_Y, m_gamestate.player[1].paddle_pos_y * 32 / LEVEL_SIZE_Y,
                                      m_gamestate.player[0].color, m_gamestate.player[1].color, m_graphics_invalidate);
             break;

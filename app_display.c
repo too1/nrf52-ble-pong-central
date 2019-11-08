@@ -4,6 +4,7 @@
 #include "nrf_gfx.h"
 #include "nrf_lcd.h"
 #include "font.h"
+#include "string.h"
 
 static nrf_lcd_t m_led_matrix = GFX_LED_DRV_MATRIX;
 
@@ -129,8 +130,11 @@ void app_display_text_view_set_color(app_display_text_view_t *text_view, uint32_
 
 void app_display_text_view_set_text(app_display_text_view_t *text_view, char *text)
 {
-    text_view->string = text;
-    text_view->invalidate = true;
+    if(strcmp(text_view->string, text) != 0)
+    {
+        text_view->string = text;
+        text_view->invalidate = true;
+    }
 }
 
 void app_display_text_view_set_pos(app_display_text_view_t *text_view, uint32_t x, uint32_t y)
@@ -170,11 +174,12 @@ void app_display_text_view_draw(app_display_text_view_t *text_view, bool clear_l
         text_view->invalidate = false;
         if(clear_last_drawn && text_view->pos_last_drawn_x != POS_INVALID)
         {
-            app_display_draw_text(text_view->string, text_view->pos_last_drawn_x, text_view->pos_last_drawn_y, CL_BLACK, text_view->alignment);
+            app_display_draw_text(text_view->last_drawn_string, text_view->pos_last_drawn_x, text_view->pos_last_drawn_y, CL_BLACK, text_view->alignment);
         }
         app_display_draw_text(text_view->string, text_view->pos_x + text_view->pos_offset_x, text_view->pos_y + text_view->pos_offset_y, text_view->color, text_view->alignment);
         text_view->pos_last_drawn_x = text_view->pos_x + text_view->pos_offset_x;
         text_view->pos_last_drawn_y = text_view->pos_y + text_view->pos_offset_y;
+        text_view->last_drawn_string = text_view->string;
     }
 }
 
