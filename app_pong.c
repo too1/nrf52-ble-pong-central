@@ -26,7 +26,7 @@ static struct {uint32_t paddle_pos_end[2]; uint32_t ball_x; uint32_t ball_y;
 static app_display_text_view_t      m_textview_get_ready = {"Get ready ..", 28, 1, CL_BLUE, ALIGNMENT_CENTRE};
 static char * m_get_ready_string_list[] = {"Get ready", "Get ready", "press", "your", "buttons", ""};
 static app_display_text_view_t      m_textview_p1_name   = {"", 1, 11, CL_BLUE, ALIGNMENT_LEFT};
-static app_display_text_view_t      m_textview_p2_name   = {"", 52, 21, CL_BLUE, ALIGNMENT_RIGHT};
+static app_display_text_view_t      m_textview_p2_name   = {"", 55, 21, CL_BLUE, ALIGNMENT_RIGHT};
 static app_display_text_view_t      m_textview_versus    = {"vs", 63, 12, CL_WHITE, ALIGNMENT_RIGHT};
 static app_display_text_view_t      m_textview_countdown = {"0", 32, 14, CL_WHITE, ALIGNMENT_CENTRE};
 
