@@ -186,10 +186,12 @@ static void scan_start(void)
 
 static void forward_controller_state_to_central(void)
 {
+    uint32_t err_code;
     if(ble_per_manager_is_connected())
     {
-        ble_per_manager_on_controller_state_change(m_thingy_uis_c[0].conn_handle != BLE_CONN_HANDLE_INVALID,
+        err_code = ble_per_manager_on_controller_state_change(m_thingy_uis_c[0].conn_handle != BLE_CONN_HANDLE_INVALID,
                                                    m_thingy_uis_c[1].conn_handle != BLE_CONN_HANDLE_INVALID);
+        NRF_LOG_INFO("ERR code: %i", err_code);
     }
 }
 
@@ -822,12 +824,15 @@ static void perf_init(void)
 #endif
 }
 
+
 void peripheral_callback(ble_per_manager_event_t *event)
 {
     switch(event->evt_type)
     {
         case BLE_PER_MNG_EVT_CONNECTED:
             NRF_LOG_INFO("Phone connected");
+            
+            // TODO: Figure out why this can't be called just after connection. q
             forward_controller_state_to_central();
             break;
 

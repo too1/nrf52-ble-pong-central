@@ -233,27 +233,27 @@ void ble_per_manager_start_advertising(void)
     APP_ERROR_CHECK(err_code);
 }
 
-void ble_per_manager_on_game_started(uint8_t game_handle)
+uint32_t ble_per_manager_on_game_started(uint8_t game_handle)
 {
     uint16_t length;
     uint8_t data_buf[2];
     data_buf[0] = BLE_PER_MNG_TX_CMD_GAME_STARTED;
     data_buf[1] = game_handle;
     length = 2;
-    ble_nus_data_send(&m_nus, data_buf, &length, m_conn_handle);    
+    return ble_nus_data_send(&m_nus, data_buf, &length, m_conn_handle);    
 }
 
-void ble_per_manager_on_point_scored(uint8_t player_index)
+uint32_t ble_per_manager_on_point_scored(uint8_t player_index)
 {
     uint16_t length;
     uint8_t data_buf[2];
     data_buf[0] = BLE_PER_MNG_TX_CMD_POINT_SCORED;
     data_buf[1] = player_index;
     length = 2;
-    ble_nus_data_send(&m_nus, data_buf, &length, m_conn_handle);
+    return ble_nus_data_send(&m_nus, data_buf, &length, m_conn_handle);
 }
 
-void ble_per_manager_on_controller_state_change(bool c1_connected, bool c2_connected)
+uint32_t ble_per_manager_on_controller_state_change(bool c1_connected, bool c2_connected)
 {
     uint16_t length;
     uint8_t data_buf[3];
@@ -261,15 +261,15 @@ void ble_per_manager_on_controller_state_change(bool c1_connected, bool c2_conne
     data_buf[1] = c1_connected ? 1 : 0;
     data_buf[2] = c2_connected ? 1 : 0;
     length = 3;
-    ble_nus_data_send(&m_nus, data_buf, &length, m_conn_handle);
+    return ble_nus_data_send(&m_nus, data_buf, &length, m_conn_handle);
 }
 
-void ble_per_manager_on_game_over(uint8_t winner_index)
+uint32_t ble_per_manager_on_game_over(uint8_t winner_index)
 {
     uint16_t length;
     uint8_t data_buf[2];
     data_buf[0] = BLE_PER_MNG_TX_CMD_GAME_OVER;
     data_buf[1] = winner_index;
     length = 2;
-    ble_nus_data_send(&m_nus, data_buf, &length, m_conn_handle);
+    return ble_nus_data_send(&m_nus, data_buf, &length, m_conn_handle);
 }

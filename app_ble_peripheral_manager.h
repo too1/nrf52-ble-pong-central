@@ -42,12 +42,12 @@ void ble_per_manager_start_advertising(void);
 
 void ble_per_manager_on_ble_evt(ble_evt_t const * p_ble_evt);
 
-void ble_per_manager_on_game_started(uint8_t game_handle);
+uint32_t ble_per_manager_on_game_started(uint8_t game_handle);
 
-void ble_per_manager_on_point_scored(uint8_t player_index);
+uint32_t ble_per_manager_on_point_scored(uint8_t player_index);
 
-void ble_per_manager_on_controller_state_change(bool c1_connected, bool c2_connected);
+uint32_t ble_per_manager_on_controller_state_change(bool c1_connected, bool c2_connected);
 
-void ble_per_manager_on_game_over(uint8_t winner_index);
+uint32_t ble_per_manager_on_game_over(uint8_t winner_index);
 
 #endif
