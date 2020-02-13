@@ -8,7 +8,7 @@ static state_ops_return_t state_return_val;
 
 static void run_function_by_state(state_mngr_t *instance, state_ops_return_t *ret_val)
 {
-    if(instance->current_state != STATE_MNGR_INVALID_STATE && instance->current_state < instance->state_ops_map_size)
+    if(instance->current_state != STATE_MNGR_INVALID_STATE && instance->current_state <= instance->state_ops_map_size)
     {
         instance->state_ops_map[instance->current_state - 1].op_func(instance, ret_val);
     }

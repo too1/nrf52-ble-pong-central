@@ -30,8 +30,9 @@ static app_display_text_view_t      m_textview_p2_name   = {"", 55, 21, CL_BLUE,
 static app_display_text_view_t      m_textview_versus    = {"vs", 63, 12, CL_WHITE, ALIGNMENT_RIGHT};
 static app_display_text_view_t      m_textview_countdown = {"0", 32, 14, CL_WHITE, ALIGNMENT_CENTRE};
 
-static state_t reset_game(void);
-static state_t reset_ball(uint32_t player_score_index);
+static state_t  reset_game(void);
+static state_t  reset_ball(uint32_t player_score_index);
+static void     pong_start_dummy_tournament_round(void);
 
 // "Private" functions
 static void reset_player_button_pressed_state(void)
@@ -294,6 +295,14 @@ void gs_waiting_for_players(state_mngr_t * context, state_ops_return_t * return_
             start_every_state(context->current_state);
             break;
 
+        case STATE_OP_UPDATE:
+            if(m_global_control_state.player[0].button_pressed && m_global_control_state.player[1].button_pressed &&
+               !m_global_control_state.mobile_app_connected)
+            {
+                pong_start_dummy_tournament_round();
+            }
+            break;
+
         case STATE_OP_DRAW:
             paddle1_color = (m_gamestate.player[0].connected_state == CONSTATE_DISCONNECTED) ? CL_RED : m_gamestate.player[0].color;
             if(m_gamestate.player[0].connected_state != CONSTATE_ACTIVE && blink_fast) paddle1_color = CL_BLACK;
@@ -533,6 +542,7 @@ uint32_t app_pong_init(pong_config_t *config)
     m_gamestate.player[1].connected_state = CONSTATE_DISCONNECTED;
     m_gamestate.player[0].color = COLOR_RGB(255, 0, 0);
     m_gamestate.player[1].color = COLOR_RGB(0, 255, 0);
+    m_global_control_state.mobile_app_connected = false;
     return 0;
 }
 
@@ -585,13 +595,13 @@ uint32_t app_pong_start_tournament_round(uint8_t *init_buffer, uint32_t init_buf
 
 static void pong_start_dummy_tournament_round(void)
 {
-    m_gamestate.player[0].color = 0x0088FF;
-    m_gamestate.player[0].name = "Bob";
+    m_gamestate.player[0].color = 0xFF0000;
+    m_gamestate.player[0].name = "Red";
     on_set_thingy_color(0, m_gamestate.player[0].color);
     app_display_text_view_set_color(&m_textview_p1_name, m_gamestate.player[0].color);
     app_display_text_view_set_text(&m_textview_p1_name, m_gamestate.player[0].name);
-    m_gamestate.player[1].color = 0xFF8800;
-    m_gamestate.player[1].name = "Alice";
+    m_gamestate.player[1].color = 0x00FF00;
+    m_gamestate.player[1].name = "Green";
     on_set_thingy_color(1, m_gamestate.player[1].color);
     app_display_text_view_set_color(&m_textview_p2_name, m_gamestate.player[1].color);
     app_display_text_view_set_text(&m_textview_p2_name, m_gamestate.player[1].name);
@@ -661,6 +671,11 @@ void app_pong_controller_status_change(uint16_t conn_handle, controller_state_t 
             }
             break;
     }
+}
+
+void app_pong_set_mobile_app_connected_state(bool connected)
+{
+    m_global_control_state.mobile_app_connected = connected;
 }
 
 pong_gamestate_t *app_pong_get_gamestate(void)

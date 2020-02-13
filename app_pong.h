@@ -102,6 +102,7 @@ typedef struct
 typedef struct
 {
     pong_controller_state_t player[PONG_NUM_PLAYERS];
+    bool                    mobile_app_connected;
 }pong_global_control_state_t;
 
 typedef enum {PONG_EVENT_GAMESTATE_UPDATE, 
@@ -162,6 +163,8 @@ uint32_t app_pong_start_tournament_round(uint8_t *init_buffer, uint32_t init_buf
 pong_controller_state_t *app_pong_get_controller(uint32_t index);
 
 void app_pong_controller_status_change(uint16_t conn_handle, controller_state_t state);
+
+void app_pong_set_mobile_app_connected_state(bool connected);
 
 pong_gamestate_t *app_pong_get_gamestate(void);
 

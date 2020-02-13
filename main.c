@@ -889,6 +889,7 @@ void peripheral_callback(ble_per_manager_event_t *event)
             
             // TODO: Figure out why this can't be called just after connection. q
             forward_controller_state_to_central();
+            
             break;
 
         case BLE_PER_MNG_EVT_DISCONNECTED:
