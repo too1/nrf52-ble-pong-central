@@ -46,7 +46,7 @@ uint32_t ble_per_manager_on_game_started(uint8_t game_handle);
 
 uint32_t ble_per_manager_on_point_scored(uint8_t player_index);
 
-uint32_t ble_per_manager_on_controller_state_change(bool c1_connected, bool c2_connected);
+uint32_t ble_per_manager_on_controller_state_change(bool c1_connected, bool c2_connected, uint8_t bat_level_1, uint8_t bat_level_2);
 
 uint32_t ble_per_manager_on_game_over(uint8_t winner_index);
 

@@ -120,6 +120,7 @@
       <file file_name="../../../ble_thingy_client/ble_thingy_tms_c.c" />
       <file file_name="../../../ble_thingy_client/ble_thingy_tss_c.c" />
       <file file_name="../../../ble_pong_app_service/ble_pas.c" />
+      <file file_name="../../../../../../components/ble/ble_services/ble_bas_c/ble_bas_c.c" />
     </folder>
     <folder Name="nRF_SoftDevice">
       <file file_name="../../../../../../components/softdevice/common/nrf_sdh.c" />

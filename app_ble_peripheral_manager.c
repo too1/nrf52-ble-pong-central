@@ -253,14 +253,16 @@ uint32_t ble_per_manager_on_point_scored(uint8_t player_index)
     return ble_nus_data_send(&m_nus, data_buf, &length, m_conn_handle);
 }
 
-uint32_t ble_per_manager_on_controller_state_change(bool c1_connected, bool c2_connected)
+uint32_t ble_per_manager_on_controller_state_change(bool c1_connected, bool c2_connected, uint8_t bat_level_1, uint8_t bat_level_2)
 {
     uint16_t length;
-    uint8_t data_buf[3];
+    uint8_t data_buf[5];
     data_buf[0] = BLE_PER_MNG_TX_CMD_CONTROLLER_STATE;
     data_buf[1] = c1_connected ? 1 : 0;
     data_buf[2] = c2_connected ? 1 : 0;
-    length = 3;
+    data_buf[3] = bat_level_1;
+    data_buf[4] = bat_level_2;
+    length = 5;
     return ble_nus_data_send(&m_nus, data_buf, &length, m_conn_handle);
 }
 

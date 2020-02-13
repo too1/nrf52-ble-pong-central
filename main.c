@@ -61,6 +61,7 @@
 #include "ble_conn_params.h"
 #include "ble_db_discovery.h"
 #include "ble_lbs_c.h"
+#include "ble_bas_c.h"
 #include "ble_thingy_uis_c.h"
 #include "ble_thingy_tms_c.h"
 #include "ble_thingy_tss_c.h"
@@ -98,10 +99,11 @@
 
 
 NRF_BLE_GATT_DEF(m_gatt);                                               /**< GATT module instance. */
+BLE_BAS_C_ARRAY_DEF(m_thingy_bas_c,        NRF_SDH_BLE_CENTRAL_LINK_COUNT);
 BLE_THINGY_UIS_C_ARRAY_DEF(m_thingy_uis_c, NRF_SDH_BLE_CENTRAL_LINK_COUNT);
 BLE_THINGY_TMS_C_ARRAY_DEF(m_thingy_tms_c, NRF_SDH_BLE_CENTRAL_LINK_COUNT);
 BLE_THINGY_TSS_C_ARRAY_DEF(m_thingy_tss_c, NRF_SDH_BLE_CENTRAL_LINK_COUNT);
-enum {THINGY_SERVICE_MASK_UIS = 1, THINGY_SERVICE_MASK_TMS = 2, THINGY_SERVICE_MASK_TSS = 4, THINGY_SERVICE_ALL_MASKS = 0x07};
+enum {THINGY_SERVICE_MASK_UIS = 1, THINGY_SERVICE_MASK_TMS = 2, THINGY_SERVICE_MASK_TSS = 4, THINGY_SERVICE_MASK_BAS = 8, THINGY_SERVICE_ALL_MASKS = 0x0F};
 BLE_DB_DISCOVERY_ARRAY_DEF(m_db_disc, NRF_SDH_BLE_CENTRAL_LINK_COUNT);  /**< Database discovery module instances. */
 
 APP_TIMER_DEF(m_app_timer_perf_update);
@@ -190,8 +192,10 @@ static void forward_controller_state_to_central(void)
     if(ble_per_manager_is_connected())
     {
         err_code = ble_per_manager_on_controller_state_change(m_thingy_uis_c[0].conn_handle != BLE_CONN_HANDLE_INVALID,
-                                                   m_thingy_uis_c[1].conn_handle != BLE_CONN_HANDLE_INVALID);
-        NRF_LOG_INFO("ERR code: %i", err_code);
+                                                              m_thingy_uis_c[1].conn_handle != BLE_CONN_HANDLE_INVALID,
+                                                              app_pong_get_controller(0)->battery_level,
+                                                              app_pong_get_controller(1)->battery_level);
+        if(err_code) NRF_LOG_INFO("forward_controller_state_to_central - Error: %i", err_code);
     }
 }
 
@@ -226,11 +230,46 @@ static void thingy_service_discovered(uint32_t service_mask)
             ble_thingy_uis_c_button_notif_enable(&m_thingy_uis_c[thingy_under_discovery_conn_handle]);
             ble_thingy_tss_config_send(&m_thingy_tss_c[thingy_under_discovery_conn_handle], 
                                                 TSS_CONFIG_SPEAKER_MODE_SAMPLE, 0);
-        
+            ble_bas_c_bl_notif_enable(&m_thingy_bas_c[thingy_under_discovery_conn_handle]);
+            forward_controller_state_to_central();
+
             thingy_under_discovery_conn_handle = 0xFFFF;
         }
     }
     
+}
+
+
+static void thingy_bas_c_evt_handler(ble_bas_c_t * p_thingy_bas_c, ble_bas_c_evt_t * p_bas_c_evt)
+{
+    switch (p_bas_c_evt->evt_type)
+    {
+        case BLE_BAS_C_EVT_DISCOVERY_COMPLETE:
+            NRF_LOG_INFO("BAS service discovered");
+            thingy_service_discovered(THINGY_SERVICE_MASK_BAS);
+            break;
+
+        case BLE_BAS_C_EVT_BATT_NOTIFICATION:
+            NRF_LOG_INFO("Battery state: %i", (int)p_bas_c_evt->params.battery_level);
+            for(int i = 0; i < PONG_NUM_PLAYERS; i++)
+            {
+                if(&m_thingy_bas_c[i] == p_thingy_bas_c)
+                {
+                    app_pong_get_controller(i)->battery_level = p_bas_c_evt->params.battery_level;
+                    break;
+                }
+            }
+            forward_controller_state_to_central();
+            break;
+
+        case BLE_BAS_C_EVT_BATT_READ_RESP:
+            NRF_LOG_INFO("Battery state read: %i", (int)p_bas_c_evt->params.battery_level);
+            break;
+
+        default:
+            // No implementation needed.
+            break;
+    }
 }
 
 /**@brief Handles events coming from the LED Button central module.
@@ -391,6 +430,9 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 
                 APP_ERROR_CHECK_BOOL(p_gap_evt->conn_handle < NRF_SDH_BLE_CENTRAL_LINK_COUNT);
 
+                err_code = ble_bas_c_handles_assign(&m_thingy_bas_c[p_gap_evt->conn_handle], p_gap_evt->conn_handle, NULL);
+                APP_ERROR_CHECK(err_code);
+
                 err_code = ble_thingy_uis_c_handles_assign(&m_thingy_uis_c[p_gap_evt->conn_handle], p_gap_evt->conn_handle, NULL);
                 APP_ERROR_CHECK(err_code);
             
@@ -415,7 +457,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             
                 app_pong_controller_status_change(p_gap_evt->conn_handle, CONSTATE_CONNECTED);
 
-                forward_controller_state_to_central();
+                //forward_controller_state_to_central();
             }
         } break; // BLE_GAP_EVT_CONNECTED
 
@@ -504,6 +546,14 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             break;
     }
 
+    if(p_ble_evt->header.evt_id == BLE_GAP_EVT_DISCONNECTED)
+    {
+        ble_bas_c_on_ble_evt(p_ble_evt, (void *)&m_thingy_bas_c[p_ble_evt->evt.gap_evt.conn_handle]);
+    }
+    else if(p_ble_evt->header.evt_id == BLE_GATTC_EVT_HVX || p_ble_evt->header.evt_id == BLE_GATTC_EVT_WRITE_RSP || p_ble_evt->header.evt_id == BLE_GATTC_EVT_READ_RSP)
+    {
+        ble_bas_c_on_ble_evt(p_ble_evt, (void *)&m_thingy_bas_c[p_ble_evt->evt.gattc_evt.conn_handle]);
+    }
     ble_per_manager_on_ble_evt(p_ble_evt);
 }
 
@@ -511,16 +561,20 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 static void thingy_c_init(void)
 {
     ret_code_t err_code;
+    ble_bas_c_init_t thingy_bas_c_init_obj;
     ble_thingy_uis_c_init_t thingy_uis_c_init_obj;
     ble_thingy_tms_c_init_t thingy_tms_c_init_obj;
     ble_thingy_tss_c_init_t thingy_tss_c_init_obj;
     
+    thingy_bas_c_init_obj.evt_handler = thingy_bas_c_evt_handler;
     thingy_uis_c_init_obj.evt_handler = thingy_uis_c_evt_handler;
     thingy_tms_c_init_obj.evt_handler = thingy_tms_c_evt_handler;
     thingy_tss_c_init_obj.evt_handler = thingy_tss_c_evt_handler;
     
     for (uint32_t i = 0; i < NRF_SDH_BLE_CENTRAL_LINK_COUNT; i++)
     {
+        err_code = ble_bas_c_init(&m_thingy_bas_c[i], &thingy_bas_c_init_obj);
+        APP_ERROR_CHECK(err_code);
         err_code = ble_thingy_uis_c_init(&m_thingy_uis_c[i], &thingy_uis_c_init_obj);
         APP_ERROR_CHECK(err_code);
         err_code = ble_thingy_tms_c_init(&m_thingy_tms_c[i], &thingy_tms_c_init_obj);
@@ -642,6 +696,7 @@ static void db_disc_handler(ble_db_discovery_evt_t * p_evt)
                   p_evt->conn_handle,
                   p_evt->conn_handle);
 
+    ble_bas_on_db_disc_evt(&m_thingy_bas_c[p_evt->conn_handle], p_evt);
     ble_thingy_uis_on_db_disc_evt(&m_thingy_uis_c[p_evt->conn_handle], p_evt);
     ble_thingy_tms_on_db_disc_evt(&m_thingy_tms_c[p_evt->conn_handle], p_evt);
     ble_thingy_tss_on_db_disc_evt(&m_thingy_tss_c[p_evt->conn_handle], p_evt);

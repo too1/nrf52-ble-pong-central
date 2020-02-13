@@ -96,6 +96,7 @@ typedef struct
     uint32_t paddle_x;
     int32_t  paddle_x_delta;
     bool     button_pressed;
+    uint8_t  battery_level;
 }pong_controller_state_t;
 
 typedef struct
