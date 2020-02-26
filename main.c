@@ -189,13 +189,17 @@ static void scan_start(void)
 static void forward_controller_state_to_central(void)
 {
     uint32_t err_code;
+
     if(ble_per_manager_is_connected())
     {
+        NRF_LOG_INFO("Skipping forward controller state");
+        #if 0
         err_code = ble_per_manager_on_controller_state_change(m_thingy_uis_c[0].conn_handle != BLE_CONN_HANDLE_INVALID,
                                                               m_thingy_uis_c[1].conn_handle != BLE_CONN_HANDLE_INVALID,
                                                               app_pong_get_controller(0)->battery_level,
                                                               app_pong_get_controller(1)->battery_level);
         if(err_code) NRF_LOG_INFO("forward_controller_state_to_central - Error: %i", err_code);
+        #endif
     }
 }
 
@@ -755,11 +759,40 @@ static void timer_init(void)
 }
 
 
+/**@brief Function for handling events from the GATT library. */
+void gatt_evt_handler(nrf_ble_gatt_t * p_gatt, nrf_ble_gatt_evt_t const * p_evt)
+{
+    uint32_t data_length;
+    if (/*(m_conn_handle == p_evt->conn_handle) &&*/ (p_evt->evt_id == NRF_BLE_GATT_EVT_ATT_MTU_UPDATED))
+    {
+        data_length = p_evt->params.att_mtu_effective - 3 - 2;
+        //m_ble_params_info.mtu = m_ble_its_max_data_len;
+        
+        NRF_LOG_INFO("gatt_event: ATT MTU is set to 0x%X (%d)", data_length, data_length);
+    }
+    else if (/*(m_conn_handle == p_evt->conn_handle) && */(p_evt->evt_id == NRF_BLE_GATT_EVT_DATA_LENGTH_UPDATED))
+    {
+        data_length = p_evt->params.att_mtu_effective - 3 - 2 - 4;
+        
+        NRF_LOG_INFO("gatt_event: Data len is set to 0x%X (%d)", data_length, data_length);
+    }
+    //NRF_LOG_DEBUG("ATT MTU exchange completed. central 0x%x peripheral 0x%x",
+      //            p_gatt->att_mtu_desired_central,
+        //        p_gatt->att_mtu_desired_periph);
+}
+
+
 /**@brief Function for initializing the GATT module.
  */
 static void gatt_init(void)
 {
-    ret_code_t err_code = nrf_ble_gatt_init(&m_gatt, NULL);
+    ret_code_t err_code = nrf_ble_gatt_init(&m_gatt, gatt_evt_handler);
+    APP_ERROR_CHECK(err_code);
+
+    err_code = nrf_ble_gatt_att_mtu_periph_set(&m_gatt, 247);
+    APP_ERROR_CHECK(err_code);
+
+    err_code = nrf_ble_gatt_data_length_set(&m_gatt, BLE_CONN_HANDLE_INVALID, NRF_SDH_BLE_GAP_DATA_LENGTH);
     APP_ERROR_CHECK(err_code);
 }
 
@@ -897,8 +930,8 @@ void peripheral_callback(ble_per_manager_event_t *event)
             break;
 
         case BLE_PER_MNG_EVT_DATA_RECEIVED:
-            NRF_LOG_INFO("Phone data received!!!!");
-            NRF_LOG_HEXDUMP_INFO(event->data_ptr, event->data_length);
+            //NRF_LOG_INFO("Phone data received!!!!");
+            //NRF_LOG_HEXDUMP_INFO(event->data_ptr, event->data_length);
             switch(event->data_ptr[0])
             {
                 case BLE_PER_MNG_RX_CMD_START_GAME:
@@ -912,8 +945,16 @@ void peripheral_callback(ble_per_manager_event_t *event)
                 case BLE_PER_MNG_RX_CMD_SET_GAME_CONFIG:
                     m_sound_enabled = (event->data_ptr[1] != 0);
                     break;
+
+                case BLE_PER_MNG_RX_CMD_PLAYER_PIC_DUMP:
+                    app_pong_forward_data_dump(event->data_ptr, 0);
+                    break;
             }
 
+            break;
+
+        case BLE_PER_MNG_EVT_DATA_DUMP_RECEIVED:
+            app_pong_forward_data_dump(event->data_ptr, event->data_length);
             break;
     }
 }

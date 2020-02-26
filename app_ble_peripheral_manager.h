@@ -7,7 +7,8 @@
 
 typedef enum {BLE_PER_MNG_EVT_CONNECTED, 
               BLE_PER_MNG_EVT_DISCONNECTED, 
-              BLE_PER_MNG_EVT_DATA_RECEIVED} ble_per_manager_event_type_t;
+              BLE_PER_MNG_EVT_DATA_RECEIVED,
+              BLE_PER_MNG_EVT_DATA_DUMP_RECEIVED} ble_per_manager_event_type_t;
 
 typedef enum {BLE_PER_MNG_TX_CMD_POINT_SCORED = 1, 
               BLE_PER_MNG_TX_CMD_CONTROLLER_STATE,
@@ -18,6 +19,7 @@ typedef enum {BLE_PER_MNG_TX_CMD_POINT_SCORED = 1,
 typedef enum {BLE_PER_MNG_RX_CMD_START_GAME = 1, 
               BLE_PER_MNG_RX_CMD_RESET_PONG, 
               BLE_PER_MNG_RX_CMD_SET_GAME_CONFIG, 
+              BLE_PER_MNG_RX_CMD_PLAYER_PIC_DUMP,
               } ble_per_manager_rx_command_t;
 
 typedef struct

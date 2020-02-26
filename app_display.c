@@ -240,6 +240,12 @@ void app_display_draw_square(uint32_t x, uint32_t y, uint32_t w, uint32_t h, uin
     nrf_gfx_rect_draw(&m_led_matrix, &rect, 1, color, true);
 }
 
+void app_display_draw_bmp232(uint32_t x, uint32_t y, uint32_t w, uint32_t h, const uint8_t *img_buf)
+{
+    nrf_gfx_rect_t rect = {.x = x, .y = y, .width = w, .height = h};
+    nrf_gfx_bmp565_draw(&m_led_matrix, &rect, img_buf);
+}
+
 void app_display_clear_screen(void)
 {
     nrf_gfx_screen_fill(&m_led_matrix, CL_BLACK);

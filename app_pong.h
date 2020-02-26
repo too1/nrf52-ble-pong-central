@@ -17,6 +17,8 @@
 #define PADDLE_SIZE_Y                   ((LEVEL_SIZE_Y / 4) + 30)
 #define PADDLE_HALFSIZE_Y               (PADDLE_SIZE_Y / 2)
 
+#define PLAYER_PROFILE_PIC_SIZE         (32 * 32 * 3)
+
 #define PI                              3.141592f
 #define PI_1_2                          1.570796f
 #define PI_3_2                          4.712389f
@@ -74,6 +76,7 @@ typedef struct
     uint32_t score;             // Current score of the player
     uint32_t color;             // The GUI color of the player
     uint8_t  *name;             // Pointer to a string with the name of the player
+    uint8_t  profile_pic[PLAYER_PROFILE_PIC_SIZE];
 }pong_player_state_t;
 
 typedef struct
@@ -159,6 +162,8 @@ uint32_t app_pong_init(pong_config_t *config);
 uint32_t app_pong_start_game(void);
 
 uint32_t app_pong_start_tournament_round(uint8_t *init_buffer, uint32_t init_buffer_length);
+
+uint32_t app_pong_forward_data_dump(uint8_t *dump, uint32_t dump_length);
 
 pong_controller_state_t *app_pong_get_controller(uint32_t index);
 

@@ -180,6 +180,17 @@ static void nus_data_handler(ble_nus_evt_t * p_evt)
                 m_callback(&m_event);
             }
             break;
+
+        case BLE_NUS_EVT_RX_DUMP_DATA:
+            memcpy(local_data_buf, p_evt->params.rx_data.p_data, p_evt->params.rx_data.length);
+            m_event.evt_type = BLE_PER_MNG_EVT_DATA_DUMP_RECEIVED;
+            m_event.data_ptr = local_data_buf;
+            m_event.data_length = p_evt->params.rx_data.length;
+            if(m_callback)
+            {
+                m_callback(&m_event);
+            }
+            break;
     }
 }
 

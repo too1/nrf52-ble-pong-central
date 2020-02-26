@@ -56,6 +56,7 @@ NRF_LOG_MODULE_REGISTER();
 
 #define BLE_UUID_NUS_TX_CHARACTERISTIC 0x0003               /**< The UUID of the TX Characteristic. */
 #define BLE_UUID_NUS_RX_CHARACTERISTIC 0x0002               /**< The UUID of the RX Characteristic. */
+#define BLE_UUID_NUS_RX_DATA_DUMP_CHAR 0x0004
 
 #define BLE_NUS_MAX_RX_CHAR_LEN        BLE_NUS_MAX_DATA_LEN /**< Maximum length of the RX Characteristic (in bytes). */
 #define BLE_NUS_MAX_TX_CHAR_LEN        BLE_NUS_MAX_DATA_LEN /**< Maximum length of the TX Characteristic (in bytes). */
@@ -168,6 +169,15 @@ static void on_write(ble_nus_t * p_nus, ble_evt_t const * p_ble_evt)
              (p_nus->data_handler != NULL))
     {
         evt.type                  = BLE_NUS_EVT_RX_DATA;
+        evt.params.rx_data.p_data = p_evt_write->data;
+        evt.params.rx_data.length = p_evt_write->len;
+
+        p_nus->data_handler(&evt);
+    }
+    else if ((p_evt_write->handle == p_nus->rx_dump_handles.value_handle) &&
+             (p_nus->data_handler != NULL))
+    {
+        evt.type                  = BLE_NUS_EVT_RX_DUMP_DATA;
         evt.params.rx_data.p_data = p_evt_write->data;
         evt.params.rx_data.length = p_evt_write->len;
 
@@ -327,6 +337,50 @@ static uint32_t rx_char_add(ble_nus_t * p_nus, const ble_nus_init_t * p_nus_init
 }
 
 
+static uint32_t rx_data_dump_char_add(ble_nus_t * p_nus, const ble_nus_init_t * p_nus_init)
+{
+    ble_gatts_char_md_t char_md;
+    ble_gatts_attr_t    attr_char_value;
+    ble_uuid_t          ble_uuid;
+    ble_gatts_attr_md_t attr_md;
+
+    memset(&char_md, 0, sizeof(char_md));
+
+    char_md.char_props.write         = 1;
+    char_md.char_props.write_wo_resp = 1;
+    char_md.p_char_user_desc         = NULL;
+    char_md.p_char_pf                = NULL;
+    char_md.p_user_desc_md           = NULL;
+    char_md.p_cccd_md                = NULL;
+    char_md.p_sccd_md                = NULL;
+
+    ble_uuid.type = p_nus->uuid_type;
+    ble_uuid.uuid = BLE_UUID_NUS_RX_DATA_DUMP_CHAR;
+
+    memset(&attr_md, 0, sizeof(attr_md));
+
+    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.read_perm);
+    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.write_perm);
+
+    attr_md.vloc    = BLE_GATTS_VLOC_STACK;
+    attr_md.rd_auth = 0;
+    attr_md.wr_auth = 0;
+    attr_md.vlen    = 1;
+
+    memset(&attr_char_value, 0, sizeof(attr_char_value));
+
+    attr_char_value.p_uuid    = &ble_uuid;
+    attr_char_value.p_attr_md = &attr_md;
+    attr_char_value.init_len  = BLE_NUS_MAX_RX_CHAR_LEN;
+    attr_char_value.init_offs = 0;
+    attr_char_value.max_len   = BLE_NUS_MAX_RX_CHAR_LEN;
+
+    return sd_ble_gatts_characteristic_add(p_nus->service_handle,
+                                           &char_md,
+                                           &attr_char_value,
+                                           &p_nus->rx_dump_handles);
+}
+
 void ble_nus_on_ble_evt(ble_evt_t const * p_ble_evt, void * p_context)
 {
     if ((p_context == NULL) || (p_ble_evt == NULL))
@@ -390,6 +444,9 @@ uint32_t ble_nus_init(ble_nus_t * p_nus, ble_nus_init_t const * p_nus_init)
 
     // Add the TX Characteristic.
     err_code = tx_char_add(p_nus, p_nus_init);
+    VERIFY_SUCCESS(err_code);
+
+    err_code = rx_data_dump_char_add(p_nus, p_nus_init);
     VERIFY_SUCCESS(err_code);
 
     return NRF_SUCCESS;

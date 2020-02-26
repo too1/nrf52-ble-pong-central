@@ -304,6 +304,7 @@ void gs_waiting_for_players(state_mngr_t * context, state_ops_return_t * return_
             break;
 
         case STATE_OP_DRAW:
+        #if 0
             paddle1_color = (m_gamestate.player[0].connected_state == CONSTATE_DISCONNECTED) ? CL_RED : m_gamestate.player[0].color;
             if(m_gamestate.player[0].connected_state != CONSTATE_ACTIVE && blink_fast) paddle1_color = CL_BLACK;
             paddle2_color = (m_gamestate.player[1].connected_state == CONSTATE_DISCONNECTED) ? CL_RED : m_gamestate.player[1].color;
@@ -312,6 +313,9 @@ void gs_waiting_for_players(state_mngr_t * context, state_ops_return_t * return_
             app_display_draw_text("Waiting", 32, 2, CL_BLUE, ALIGNMENT_CENTRE);
             app_display_draw_text("for", 32, 11, CL_BLUE, ALIGNMENT_CENTRE);
             app_display_draw_text("players", 32, 20, CL_BLUE, ALIGNMENT_CENTRE);
+        #endif
+            app_display_draw_bmp232(0, 0, 32, 32, m_gamestate.player[0].profile_pic);
+            app_display_draw_bmp232(32, 0, 32, 32, m_gamestate.player[1].profile_pic);
             break;
 
         default:
@@ -543,6 +547,12 @@ uint32_t app_pong_init(pong_config_t *config)
     m_gamestate.player[0].color = COLOR_RGB(255, 0, 0);
     m_gamestate.player[1].color = COLOR_RGB(0, 255, 0);
     m_global_control_state.mobile_app_connected = false;
+
+    for(int i = 0; i < 512; i+= 3)
+    {
+        m_gamestate.player[0].profile_pic[i+2] = 0xFF;
+        m_gamestate.player[0].profile_pic[i+1] = 0x00;
+    }
     return 0;
 }
 
@@ -591,6 +601,30 @@ uint32_t app_pong_start_tournament_round(uint8_t *init_buffer, uint32_t init_buf
     on_game_started();
     state_mngr_run_state(&m_gamestate_mngr, STATE_GAME_TOURNAMENT_ROUND_STARTING);
     return 0;
+}
+
+uint32_t app_pong_forward_data_dump(uint8_t *dump, uint32_t dump_length)
+{
+    static uint32_t counter = 0;
+    static uint32_t index = 0;
+    uint16_t pic_width, pic_height;
+    if(dump_length == 0) 
+    {
+        // New picture incoming
+        index = dump[1];
+        pic_width = dump[2] << 8 | dump[3];
+        pic_height = dump[4] << 8 | dump[5];
+        NRF_LOG_INFO("Picture starting. W %i, H %i", (int)pic_width, (int)pic_height);
+        counter = 0;
+    }
+    else
+    {
+        if(index >= 0 && index <= 1)
+        {
+            memcpy(m_gamestate.player[index].profile_pic + counter, dump, dump_length);
+        }
+        counter += dump_length;
+    }
 }
 
 static void pong_start_dummy_tournament_round(void)

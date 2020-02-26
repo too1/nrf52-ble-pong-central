@@ -450,7 +450,7 @@ void nrf_gfx_screen_fill(nrf_lcd_t const * p_instance, uint32_t color)
 
 ret_code_t nrf_gfx_bmp565_draw(nrf_lcd_t const * p_instance,
                                nrf_gfx_rect_t const * p_rect,
-                               uint16_t const * img_buf)
+                               uint8_t const * img_buf)
 {
     ASSERT(p_instance != NULL);
     ASSERT(p_instance->p_lcd_cb->state != NRFX_DRV_STATE_UNINITIALIZED);
@@ -463,7 +463,7 @@ ret_code_t nrf_gfx_bmp565_draw(nrf_lcd_t const * p_instance,
     }
 
     size_t idx;
-    uint16_t pixel;
+    uint32_t pixel;
     uint8_t padding = p_rect->width % 2;
 
     for (int32_t i = 0; i < p_rect->height; i++)
@@ -472,7 +472,15 @@ ret_code_t nrf_gfx_bmp565_draw(nrf_lcd_t const * p_instance,
         {
             idx = (uint32_t)((p_rect->height - i - 1) * (p_rect->width + padding) + j);
 
-            pixel = (img_buf[idx] >> 8) | (img_buf[idx] << 8);
+            //pixel = (img_buf[idx] >> 8) | (img_buf[idx] << 8);
+            
+            //pixel = ((img_buf[idx] >> 11) << 3) << 16;
+            //pixel |= ((img_buf[idx] & 0x07E0) >> 3) << 8;
+            //pixel |= ((img_buf[idx] & 0x003F) >> 0) << 2;
+            pixel = img_buf[idx*3+0] << 16;            
+            pixel |= img_buf[idx*3+1] <<  8;
+            pixel |= img_buf[idx*3+2] <<  0;
+
 
             pixel_draw(p_instance, p_rect->x + j, p_rect->y + i, pixel);
         }

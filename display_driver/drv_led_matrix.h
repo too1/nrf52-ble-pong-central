@@ -15,7 +15,7 @@
 #define MATRIX_BUFFER_WIDTH     MATRIX_PIXEL_WIDTH / 8
 #define MATRIX_BUFFER_HEIGHT    MATRIX_PIXEL_HEIGHT
 
-#define MATRIX_MULTI_DRAW       2
+#define MATRIX_MULTI_DRAW       3
 
 #define CONFIG_PIN_AS_OUTPUT_AND_CLEAR(pin) {nrf_gpio_cfg_output(pin); nrf_gpio_pin_clear(pin);}
 #define CONFIG_PIN_AS_OUTPUT_AND_SET(pin) {nrf_gpio_cfg_output(pin); nrf_gpio_pin_set(pin);}
