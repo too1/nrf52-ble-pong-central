@@ -183,6 +183,20 @@ void app_display_text_view_draw(app_display_text_view_t *text_view, bool clear_l
     }
 }
 
+void app_display_text_view_draw_w_shadow(app_display_text_view_t *text_view)
+{
+    if(text_view->invalidate)
+    {
+        text_view->invalidate = false;
+        app_display_draw_text(text_view->string, text_view->pos_x + text_view->pos_offset_x - 1, text_view->pos_y + text_view->pos_offset_y - 1, CL_BLACK, text_view->alignment);
+        app_display_draw_text(text_view->string, text_view->pos_x + text_view->pos_offset_x + 1, text_view->pos_y + text_view->pos_offset_y + 1, CL_BLACK, text_view->alignment);
+        app_display_draw_text(text_view->string, text_view->pos_x + text_view->pos_offset_x, text_view->pos_y + text_view->pos_offset_y, text_view->color, text_view->alignment);
+        text_view->pos_last_drawn_x = text_view->pos_x + text_view->pos_offset_x;
+        text_view->pos_last_drawn_y = text_view->pos_y + text_view->pos_offset_y;
+        text_view->last_drawn_string = text_view->string;
+    }
+}
+
 void app_display_draw_text(char *text, uint32_t x, uint32_t y, uint32_t color, text_alignment_t alignment)
 {
     const nrf_gfx_font_desc_t *m_font = &arialNarrow_8ptFontInfo;

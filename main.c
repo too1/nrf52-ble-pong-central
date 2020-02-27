@@ -192,14 +192,13 @@ static void forward_controller_state_to_central(void)
 
     if(ble_per_manager_is_connected())
     {
-        NRF_LOG_INFO("Skipping forward controller state");
-        #if 0
+#if 1
         err_code = ble_per_manager_on_controller_state_change(m_thingy_uis_c[0].conn_handle != BLE_CONN_HANDLE_INVALID,
                                                               m_thingy_uis_c[1].conn_handle != BLE_CONN_HANDLE_INVALID,
                                                               app_pong_get_controller(0)->battery_level,
                                                               app_pong_get_controller(1)->battery_level);
         if(err_code) NRF_LOG_INFO("forward_controller_state_to_central - Error: %i", err_code);
-        #endif
+#endif
     }
 }
 

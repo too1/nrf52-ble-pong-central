@@ -5,6 +5,7 @@
 #include "drv_led_matrix.h"
 #include "nrfx_spim.h"
 #include "sdk_macros.h"
+#include "nrf_delay.h"
 
 static const nrfx_spim_t spi_red_instance      = NRFX_SPIM_INSTANCE(0);  /**< SPI instance. */
 static const nrfx_spim_t spi_green_instance    = NRFX_SPIM_INSTANCE(1);  /**< SPI instance. */
@@ -119,7 +120,7 @@ static uint32_t drv_led_setup_spi()
     config.ss_pin       = NRFX_SPIM_PIN_NOT_USED;
     config.irq_priority = NRFX_SPIM_DEFAULT_CONFIG_IRQ_PRIORITY;
     config.orc          = 0xFF;
-    config.frequency    = NRF_SPIM_FREQ_1M;
+    config.frequency    = NRF_SPIM_FREQ_8M;
     config.mode         = NRF_SPIM_MODE_0;
     config.bit_order    = NRF_SPIM_BIT_ORDER_LSB_FIRST;
 
@@ -170,10 +171,11 @@ void TIMER1_IRQHandler(void)
     {
         drv_led_swap_spi_pins(ACTIVE_SCREEN_HALF_BOTTOM);
     }
-    
+
     drv_led_start_spi_transfer();
     
     pixel_row_number = (pixel_row_number + 1) & 0x1F; // Increment pixel row number. Reset to 0 on pixel row number overflow
+    NRF_TIMER1->TASKS_START = 1;
 }
 
 
@@ -183,9 +185,10 @@ static void drv_led_setup_latch_timer()
     NRF_TIMER1->MODE = TIMER_MODE_MODE_Timer << TIMER_MODE_MODE_Pos;
     NRF_TIMER1->BITMODE = TIMER_BITMODE_BITMODE_32Bit << TIMER_BITMODE_BITMODE_Pos;
     NRF_TIMER1->PRESCALER = 0;
-    NRF_TIMER1->CC[0] = 9200 / MATRIX_MULTI_DRAW; 
-    NRF_TIMER1->SHORTS = TIMER_SHORTS_COMPARE0_CLEAR_Enabled << TIMER_SHORTS_COMPARE0_CLEAR_Pos;
+    NRF_TIMER1->CC[0] = 2000 / MATRIX_MULTI_DRAW; 
+    NRF_TIMER1->SHORTS = TIMER_SHORTS_COMPARE0_CLEAR_Msk | TIMER_SHORTS_COMPARE0_STOP_Msk;
     NRF_TIMER1->INTENSET = (TIMER_INTENSET_COMPARE0_Enabled << TIMER_INTENSET_COMPARE0_Pos);
+    NVIC_SetPriority(TIMER1_IRQn, 2);
     NVIC_EnableIRQ(TIMER1_IRQn);
 }
 

@@ -17,7 +17,7 @@
 #define PADDLE_SIZE_Y                   ((LEVEL_SIZE_Y / 4) + 30)
 #define PADDLE_HALFSIZE_Y               (PADDLE_SIZE_Y / 2)
 
-#define PLAYER_PROFILE_PIC_SIZE         (32 * 32 * 3)
+#define PLAYER_PROFILE_PIC_SIZE         (32 * 32 * 1)
 
 #define PI                              3.141592f
 #define PI_1_2                          1.570796f
@@ -77,6 +77,7 @@ typedef struct
     uint32_t color;             // The GUI color of the player
     uint8_t  *name;             // Pointer to a string with the name of the player
     uint8_t  profile_pic[PLAYER_PROFILE_PIC_SIZE];
+    uint8_t  profile_pic_loaded;
 }pong_player_state_t;
 
 typedef struct

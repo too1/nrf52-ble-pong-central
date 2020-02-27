@@ -63,6 +63,8 @@ void app_display_text_view_invalidate_all(void);
 
 void app_display_text_view_draw(app_display_text_view_t *text_view, bool clear_last_drawn);
 
+void app_display_text_view_draw_w_shadow(app_display_text_view_t *text_view);
+
 void app_display_draw_text(char *text, uint32_t x, uint32_t y, uint32_t color, text_alignment_t alignment);
 
 void app_display_draw_int(int32_t value, uint32_t x, uint32_t y, uint32_t color, text_alignment_t alignment);

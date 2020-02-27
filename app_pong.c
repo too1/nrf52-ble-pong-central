@@ -20,13 +20,15 @@ static pong_global_control_state_t  m_global_control_state;
 static pong_event_t                 m_pong_event;
 static bool                         m_graphics_invalidate = true;
 
+static uint8_t                      m_background_pic[64*32*1];
+
 static struct {uint32_t paddle_pos_end[2]; uint32_t ball_x; uint32_t ball_y; 
                uint32_t winning_player; bool game_over;} m_point_won_game_state;
 
 static app_display_text_view_t      m_textview_get_ready = {"Get ready ..", 28, 1, CL_BLUE, ALIGNMENT_CENTRE};
 static char * m_get_ready_string_list[] = {"Get ready", "Get ready", "press", "your", "buttons", ""};
 static app_display_text_view_t      m_textview_p1_name   = {"", 1, 11, CL_BLUE, ALIGNMENT_LEFT};
-static app_display_text_view_t      m_textview_p2_name   = {"", 55, 21, CL_BLUE, ALIGNMENT_RIGHT};
+static app_display_text_view_t      m_textview_p2_name   = {"", 55, 20, CL_BLUE, ALIGNMENT_RIGHT};
 static app_display_text_view_t      m_textview_versus    = {"vs", 63, 12, CL_WHITE, ALIGNMENT_RIGHT};
 static app_display_text_view_t      m_textview_countdown = {"0", 32, 14, CL_WHITE, ALIGNMENT_CENTRE};
 
@@ -293,6 +295,7 @@ void gs_waiting_for_players(state_mngr_t * context, state_ops_return_t * return_
     {
         case STATE_OP_ENTER:
             start_every_state(context->current_state);
+            for(int i = 0; i < (64*32); i++) m_background_pic[i] = 0x3;
             break;
 
         case STATE_OP_UPDATE:
@@ -304,18 +307,15 @@ void gs_waiting_for_players(state_mngr_t * context, state_ops_return_t * return_
             break;
 
         case STATE_OP_DRAW:
-        #if 0
-            paddle1_color = (m_gamestate.player[0].connected_state == CONSTATE_DISCONNECTED) ? CL_RED : m_gamestate.player[0].color;
+            /*paddle1_color = (m_gamestate.player[0].connected_state == CONSTATE_DISCONNECTED) ? CL_RED : m_gamestate.player[0].color;
             if(m_gamestate.player[0].connected_state != CONSTATE_ACTIVE && blink_fast) paddle1_color = CL_BLACK;
             paddle2_color = (m_gamestate.player[1].connected_state == CONSTATE_DISCONNECTED) ? CL_RED : m_gamestate.player[1].color;
             if(m_gamestate.player[1].connected_state != CONSTATE_ACTIVE && blink_fast) paddle2_color = CL_BLACK;
             app_display_draw_paddles(16, 16, paddle1_color, paddle2_color, m_graphics_invalidate);
             app_display_draw_text("Waiting", 32, 2, CL_BLUE, ALIGNMENT_CENTRE);
             app_display_draw_text("for", 32, 11, CL_BLUE, ALIGNMENT_CENTRE);
-            app_display_draw_text("players", 32, 20, CL_BLUE, ALIGNMENT_CENTRE);
-        #endif
-            app_display_draw_bmp232(0, 0, 32, 32, m_gamestate.player[0].profile_pic);
-            app_display_draw_bmp232(32, 0, 32, 32, m_gamestate.player[1].profile_pic);
+            app_display_draw_text("players", 32, 20, CL_BLUE, ALIGNMENT_CENTRE);*/
+            app_display_draw_bmp232(0, 0, 64, 32, m_background_pic);
             break;
 
         default:
@@ -334,7 +334,7 @@ void gs_tournament_round_starting(state_mngr_t * context, state_ops_return_t * r
             get_ready_text_index = 0;
             return_data->go_to_state = reset_game();
             //app_display_draw_text(m_gamestate.player[0].name, 1, 11, m_gamestate.player[0].color, ALIGNMENT_LEFT);
-            app_display_draw_text("vs", 63, 12, CL_WHITE, ALIGNMENT_RIGHT);
+            //app_display_draw_text("vs", 63, 12, CL_WHITE, ALIGNMENT_RIGHT);
             //app_display_draw_text(m_gamestate.player[1].name, 52,21, m_gamestate.player[1].color, ALIGNMENT_RIGHT);
             break;
 
@@ -348,20 +348,27 @@ void gs_tournament_round_starting(state_mngr_t * context, state_ops_return_t * r
 
         case STATE_OP_DRAW:
             if((context->lifetime % 50) == 0){
-                app_display_draw_square(0, 0, 64, 12, CL_BLACK);
+                app_display_draw_bmp232(0, 0, 32, 32, m_gamestate.player[0].profile_pic);
+                app_display_draw_bmp232(32, 0, 32, 32, m_gamestate.player[1].profile_pic);
                 app_display_text_view_set_text(&m_textview_get_ready, m_get_ready_string_list[get_ready_text_index++]);
                 get_ready_text_index %= (sizeof(m_get_ready_string_list) / sizeof(m_get_ready_string_list[0]));
-                app_display_text_view_draw(&m_textview_get_ready, true);
+                app_display_text_view_draw(&m_textview_get_ready, false);
+                if((context->lifetime % 100) == 0)
+                {
+                    app_display_text_view_invalidate_all();
+                    app_display_text_view_draw_w_shadow(&m_textview_p1_name);
+                    app_display_text_view_draw_w_shadow(&m_textview_p2_name);
+                }
             }
             //app_display_text_view_draw(&m_textview_get_ready, false);
             
             //app_display_text_view_set_offset(&m_textview_p1_name, get_int_sinus(context->lifetime % 100, 100, 0, 10), 0);
-            app_display_text_view_set_color(&m_textview_p1_name, (m_gamestate.player[0].connected_state == CONSTATE_ACTIVE && m_global_control_state.player[0].button_pressed) || blink_fast ? m_gamestate.player[0].color : CL_BLACK);
-            app_display_text_view_draw(&m_textview_p1_name, false);
-            app_display_text_view_draw(&m_textview_versus, false);
+            //app_display_text_view_set_color(&m_textview_p1_name, (m_gamestate.player[0].connected_state == CONSTATE_ACTIVE && m_global_control_state.player[0].button_pressed) || blink_fast ? m_gamestate.player[0].color : CL_BLACK);
+            //app_display_text_view_draw(&m_textview_p1_name, false);
+            //app_display_text_view_draw(&m_textview_versus, false);
             //app_display_text_view_set_offset(&m_textview_p2_name, get_int_sinus(context->lifetime % 140, 140, 0, 10), 0);
-            app_display_text_view_set_color(&m_textview_p2_name, (m_gamestate.player[1].connected_state == CONSTATE_ACTIVE && m_global_control_state.player[1].button_pressed) || blink_fast ? m_gamestate.player[1].color : CL_BLACK);
-            app_display_text_view_draw(&m_textview_p2_name, false);
+            //app_display_text_view_set_color(&m_textview_p2_name, (m_gamestate.player[1].connected_state == CONSTATE_ACTIVE && m_global_control_state.player[1].button_pressed) || blink_fast ? m_gamestate.player[1].color : CL_BLACK);
+            //app_display_text_view_draw(&m_textview_p2_name, false);
             break;
 
         default:
@@ -501,8 +508,9 @@ void gs_score_limit_reached(state_mngr_t * context, state_ops_return_t * return_
     {
         case STATE_OP_ENTER:
             start_every_state(context->current_state);
-            app_display_draw_text("GAME OVER", 32, 2, CL_YELLOW, ALIGNMENT_CENTRE);
-            app_display_score_state(&m_gamestate);
+            //app_display_draw_text("GAME OVER", 32, 2, CL_YELLOW, ALIGNMENT_CENTRE);
+            //app_display_score_state(&m_gamestate);
+            app_display_draw_bmp232(0, 0, 64, 32, m_background_pic);
             break;
 
         case STATE_OP_UPDATE:
@@ -542,17 +550,14 @@ uint32_t app_pong_init(pong_config_t *config)
 
     app_timer_create(&m_game_loop_timer_id, APP_TIMER_MODE_REPEATED, update_game_loop);
     reset_game();
-    m_gamestate.player[0].connected_state = CONSTATE_DISCONNECTED;
-    m_gamestate.player[1].connected_state = CONSTATE_DISCONNECTED;
+    for(int p = 0; p < 2; p++)
+    {
+        m_gamestate.player[p].connected_state = CONSTATE_DISCONNECTED;
+        m_gamestate.player[p].profile_pic_loaded = 0;
+    }
     m_gamestate.player[0].color = COLOR_RGB(255, 0, 0);
     m_gamestate.player[1].color = COLOR_RGB(0, 255, 0);
     m_global_control_state.mobile_app_connected = false;
-
-    for(int i = 0; i < 512; i+= 3)
-    {
-        m_gamestate.player[0].profile_pic[i+2] = 0xFF;
-        m_gamestate.player[0].profile_pic[i+1] = 0x00;
-    }
     return 0;
 }
 
@@ -622,8 +627,23 @@ uint32_t app_pong_forward_data_dump(uint8_t *dump, uint32_t dump_length)
         if(index >= 0 && index <= 1)
         {
             memcpy(m_gamestate.player[index].profile_pic + counter, dump, dump_length);
+            counter += dump_length;
+            if(counter >= PLAYER_PROFILE_PIC_SIZE) 
+            {
+                m_gamestate.player[index].profile_pic_loaded = 1;
+            }
         }
-        counter += dump_length;
+        else if(index == 2)
+        {
+            memcpy(m_background_pic + counter, dump, dump_length);
+            counter += dump_length;
+            if(dump_length >= (PLAYER_PROFILE_PIC_SIZE*2))
+            {
+    
+            }
+            
+        }
+
     }
 }
 

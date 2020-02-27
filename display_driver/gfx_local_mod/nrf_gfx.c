@@ -477,10 +477,9 @@ ret_code_t nrf_gfx_bmp565_draw(nrf_lcd_t const * p_instance,
             //pixel = ((img_buf[idx] >> 11) << 3) << 16;
             //pixel |= ((img_buf[idx] & 0x07E0) >> 3) << 8;
             //pixel |= ((img_buf[idx] & 0x003F) >> 0) << 2;
-            pixel = img_buf[idx*3+0] << 16;            
-            pixel |= img_buf[idx*3+1] <<  8;
-            pixel |= img_buf[idx*3+2] <<  0;
-
+            pixel =  (img_buf[idx] & 0x03) << (6 + 16);            
+            pixel |= (img_buf[idx] & 0x0C) <<  (4 + 8);
+            pixel |= (img_buf[idx] & 0x30) <<  (2 + 0);
 
             pixel_draw(p_instance, p_rect->x + j, p_rect->y + i, pixel);
         }
