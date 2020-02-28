@@ -27,7 +27,7 @@
 #define PONG_DIRECTION_LEFT             PI
 #define PONG_DIRECTION_UP               PI_3_2
 
-#define PONG_PREDELAY_TIME_S            4
+#define PONG_PREDELAY_TIME_S            6
 #define PONG_POINT_SCORED_SHOW_TIME_S   3
 #define PONG_SCORE_LIMIT                3
 #define PONG_SPEED_INC_INTERVAL         10

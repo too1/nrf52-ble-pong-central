@@ -120,7 +120,7 @@ static uint32_t drv_led_setup_spi()
     config.ss_pin       = NRFX_SPIM_PIN_NOT_USED;
     config.irq_priority = NRFX_SPIM_DEFAULT_CONFIG_IRQ_PRIORITY;
     config.orc          = 0xFF;
-    config.frequency    = NRF_SPIM_FREQ_8M;
+    config.frequency    = NRF_SPIM_FREQ_1M;
     config.mode         = NRF_SPIM_MODE_0;
     config.bit_order    = NRF_SPIM_BIT_ORDER_LSB_FIRST;
 
@@ -185,7 +185,7 @@ static void drv_led_setup_latch_timer()
     NRF_TIMER1->MODE = TIMER_MODE_MODE_Timer << TIMER_MODE_MODE_Pos;
     NRF_TIMER1->BITMODE = TIMER_BITMODE_BITMODE_32Bit << TIMER_BITMODE_BITMODE_Pos;
     NRF_TIMER1->PRESCALER = 0;
-    NRF_TIMER1->CC[0] = 2000 / MATRIX_MULTI_DRAW; 
+    NRF_TIMER1->CC[0] = 4000 / MATRIX_MULTI_DRAW; 
     NRF_TIMER1->SHORTS = TIMER_SHORTS_COMPARE0_CLEAR_Msk | TIMER_SHORTS_COMPARE0_STOP_Msk;
     NRF_TIMER1->INTENSET = (TIMER_INTENSET_COMPARE0_Enabled << TIMER_INTENSET_COMPARE0_Pos);
     NVIC_SetPriority(TIMER1_IRQn, 2);

@@ -20,7 +20,7 @@ static pong_global_control_state_t  m_global_control_state;
 static pong_event_t                 m_pong_event;
 static bool                         m_graphics_invalidate = true;
 
-static uint8_t                      m_background_pic[64*32*1];
+static uint8_t                      m_background_pic[MATRIX_PIXEL_WIDTH*MATRIX_PIXEL_HEIGHT*1];
 
 static struct {uint32_t paddle_pos_end[2]; uint32_t ball_x; uint32_t ball_y; 
                uint32_t winning_player; bool game_over;} m_point_won_game_state;
@@ -45,10 +45,13 @@ static void reset_player_button_pressed_state(void)
     }
 }
 
-static void start_every_state(uint32_t new_state)
+static void start_every_state(uint32_t new_state, bool clear_screen)
 {
     reset_player_button_pressed_state();
-    app_display_clear_screen();
+    if(clear_screen)
+    {
+        app_display_clear_screen();
+    }
     m_graphics_invalidate = true;
     app_display_text_view_invalidate_all();
 }
@@ -294,8 +297,7 @@ void gs_waiting_for_players(state_mngr_t * context, state_ops_return_t * return_
     switch(context->current_op)
     {
         case STATE_OP_ENTER:
-            start_every_state(context->current_state);
-            for(int i = 0; i < (64*32); i++) m_background_pic[i] = 0x3;
+            start_every_state(context->current_state, true);
             break;
 
         case STATE_OP_UPDATE:
@@ -307,15 +309,14 @@ void gs_waiting_for_players(state_mngr_t * context, state_ops_return_t * return_
             break;
 
         case STATE_OP_DRAW:
-            /*paddle1_color = (m_gamestate.player[0].connected_state == CONSTATE_DISCONNECTED) ? CL_RED : m_gamestate.player[0].color;
+            paddle1_color = (m_gamestate.player[0].connected_state == CONSTATE_DISCONNECTED) ? CL_RED : m_gamestate.player[0].color;
             if(m_gamestate.player[0].connected_state != CONSTATE_ACTIVE && blink_fast) paddle1_color = CL_BLACK;
             paddle2_color = (m_gamestate.player[1].connected_state == CONSTATE_DISCONNECTED) ? CL_RED : m_gamestate.player[1].color;
             if(m_gamestate.player[1].connected_state != CONSTATE_ACTIVE && blink_fast) paddle2_color = CL_BLACK;
             app_display_draw_paddles(16, 16, paddle1_color, paddle2_color, m_graphics_invalidate);
             app_display_draw_text("Waiting", 32, 2, CL_BLUE, ALIGNMENT_CENTRE);
             app_display_draw_text("for", 32, 11, CL_BLUE, ALIGNMENT_CENTRE);
-            app_display_draw_text("players", 32, 20, CL_BLUE, ALIGNMENT_CENTRE);*/
-            app_display_draw_bmp232(0, 0, 64, 32, m_background_pic);
+            app_display_draw_text("players", 32, 20, CL_BLUE, ALIGNMENT_CENTRE);
             break;
 
         default:
@@ -330,7 +331,7 @@ void gs_tournament_round_starting(state_mngr_t * context, state_ops_return_t * r
     switch(context->current_op)
     {
         case STATE_OP_ENTER:
-            start_every_state(context->current_state);
+            start_every_state(context->current_state, true);
             get_ready_text_index = 0;
             return_data->go_to_state = reset_game();
             //app_display_draw_text(m_gamestate.player[0].name, 1, 11, m_gamestate.player[0].color, ALIGNMENT_LEFT);
@@ -352,7 +353,7 @@ void gs_tournament_round_starting(state_mngr_t * context, state_ops_return_t * r
                 app_display_draw_bmp232(32, 0, 32, 32, m_gamestate.player[1].profile_pic);
                 app_display_text_view_set_text(&m_textview_get_ready, m_get_ready_string_list[get_ready_text_index++]);
                 get_ready_text_index %= (sizeof(m_get_ready_string_list) / sizeof(m_get_ready_string_list[0]));
-                app_display_text_view_draw(&m_textview_get_ready, false);
+                app_display_text_view_draw_w_shadow(&m_textview_get_ready);
                 if((context->lifetime % 100) == 0)
                 {
                     app_display_text_view_invalidate_all();
@@ -381,7 +382,7 @@ void gs_start_new_game(state_mngr_t * context, state_ops_return_t * return_data)
     switch(context->current_op)
     {
         case STATE_OP_ENTER:
-            start_every_state(context->current_state);
+            start_every_state(context->current_state, false);
             return_data->go_to_state = reset_game();
             break;
 
@@ -396,12 +397,13 @@ void gs_start_new_game(state_mngr_t * context, state_ops_return_t * return_data)
 
 void gs_start_predelay(state_mngr_t * context, state_ops_return_t * return_data)
 {
-    static char *countdown_text[] = {"0", "1", "2", "3", "4", "5"};
+    static char tmp_countdown_text[16];
     switch(context->current_op)
     {
         case STATE_OP_ENTER:
-            start_every_state(context->current_state);
-            app_display_draw_square(4, 0, 56, 32, CL_BLACK);
+            start_every_state(context->current_state, false);
+            app_display_fade_to_black(0);
+            //app_display_draw_square(4, 0, 56, 32, CL_BLACK);
             app_display_score_state(&m_gamestate);
             break;
 
@@ -413,10 +415,11 @@ void gs_start_predelay(state_mngr_t * context, state_ops_return_t * return_data)
             break;
 
         case STATE_OP_DRAW:
+            app_display_fade_to_black(32);
             app_display_draw_text("Get ready", 32, 2, CL_WHITE, ALIGNMENT_CENTRE);
-            //app_display_draw_square(20, 12, 20, 20, CL_BLACK);
-            app_display_text_view_set_text(&m_textview_countdown, countdown_text[PONG_PREDELAY_TIME_S - (context->lifetime / GAME_LOOP_UPDATE_FREQ)]);
-            app_display_text_view_draw(&m_textview_countdown, true);
+            app_display_draw_square(29, 14, 6, 8, CL_BLACK);
+            sprintf(tmp_countdown_text, "%i", PONG_PREDELAY_TIME_S - (context->lifetime / GAME_LOOP_UPDATE_FREQ));
+            app_display_draw_text(tmp_countdown_text, 32, 13, CL_WHITE, ALIGNMENT_CENTRE);
             app_display_draw_paddles(m_gamestate.player[0].paddle_pos_y * 32 / LEVEL_SIZE_Y, m_gamestate.player[1].paddle_pos_y * 32 / LEVEL_SIZE_Y,
                                      m_gamestate.player[0].color, m_gamestate.player[1].color, m_graphics_invalidate);
             break;
@@ -431,7 +434,7 @@ void gs_game_running(state_mngr_t * context, state_ops_return_t * return_data)
     switch(context->current_op)
     {
         case STATE_OP_ENTER:
-            start_every_state(context->current_state);
+            start_every_state(context->current_state, true);
             break;
 
         case STATE_OP_UPDATE:
@@ -455,7 +458,7 @@ void gs_point_scored(state_mngr_t * context, state_ops_return_t * return_data)
     switch(context->current_op)
     {
         case STATE_OP_ENTER:
-            start_every_state(context->current_state);
+            start_every_state(context->current_state, true);
             m_point_won_game_state.paddle_pos_end[0] = m_gamestate.player[0].paddle_pos_y;
             m_point_won_game_state.paddle_pos_end[1] = m_gamestate.player[1].paddle_pos_y;
             break;
@@ -507,7 +510,7 @@ void gs_score_limit_reached(state_mngr_t * context, state_ops_return_t * return_
     switch(context->current_op)
     {
         case STATE_OP_ENTER:
-            start_every_state(context->current_state);
+            start_every_state(context->current_state, true);
             //app_display_draw_text("GAME OVER", 32, 2, CL_YELLOW, ALIGNMENT_CENTRE);
             //app_display_score_state(&m_gamestate);
             app_display_draw_bmp232(0, 0, 64, 32, m_background_pic);
@@ -540,7 +543,7 @@ uint32_t app_pong_init(pong_config_t *config)
     if(config->event_handler == 0) return -1;
     m_event_callback = config->event_handler;
     m_game_initialized = true;
-    
+
     state_mngr_init(&m_gamestate_mngr, state_ops_map, sizeof(state_ops_map)/sizeof(state_ops_map[0]));
 
     app_display_text_view_add(&m_textview_get_ready);

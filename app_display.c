@@ -5,11 +5,15 @@
 #include "nrf_lcd.h"
 #include "font.h"
 #include "string.h"
+#include <stdio.h> 
+#include <stdlib.h> 
 
 static nrf_lcd_t m_led_matrix = GFX_LED_DRV_MATRIX;
 
 static app_display_text_view_t * m_text_view_list[TEXT_VIEW_MAX_NUM];
 static uint32_t                  m_text_view_num = 0;
+
+static uint16_t                  m_rnd_screen_fade_buffer[MATRIX_PIXEL_WIDTH*MATRIX_PIXEL_HEIGHT];
 
 void app_display_init(void)
 {
@@ -20,6 +24,17 @@ void app_display_init(void)
     lcd_cb.rotation = NRF_LCD_ROTATE_0;
     lcd_cb.state = NRFX_DRV_STATE_UNINITIALIZED;
     
+    // Initialize random fade buffer
+    uint16_t tmp, rnd_index;
+    for(int i = 0; i < (MATRIX_PIXEL_WIDTH*MATRIX_PIXEL_HEIGHT); i++) m_rnd_screen_fade_buffer[i] = i;
+    for(int i = 0; i < (MATRIX_PIXEL_WIDTH*MATRIX_PIXEL_HEIGHT); i++)
+    {
+        rnd_index = rand() % (MATRIX_PIXEL_WIDTH*MATRIX_PIXEL_HEIGHT);
+        tmp = m_rnd_screen_fade_buffer[rnd_index];
+        m_rnd_screen_fade_buffer[rnd_index] = m_rnd_screen_fade_buffer[i];
+        m_rnd_screen_fade_buffer[i] = tmp;
+    }
+
     m_led_matrix.p_lcd_cb = &lcd_cb;
     err_code = nrf_gfx_init(&m_led_matrix);
     APP_ERROR_CHECK(err_code);
@@ -130,7 +145,7 @@ void app_display_text_view_set_color(app_display_text_view_t *text_view, uint32_
 
 void app_display_text_view_set_text(app_display_text_view_t *text_view, char *text)
 {
-    if(strcmp(text_view->string, text) != 0)
+    //if(strcmp(text_view->string, text) != 0)
     {
         text_view->string = text;
         text_view->invalidate = true;
@@ -188,7 +203,7 @@ void app_display_text_view_draw_w_shadow(app_display_text_view_t *text_view)
     if(text_view->invalidate)
     {
         text_view->invalidate = false;
-        app_display_draw_text(text_view->string, text_view->pos_x + text_view->pos_offset_x - 1, text_view->pos_y + text_view->pos_offset_y - 1, CL_BLACK, text_view->alignment);
+        app_display_draw_text(text_view->string, text_view->pos_x + text_view->pos_offset_x - 1, text_view->pos_y + text_view->pos_offset_y - 1, CL_WHITE, text_view->alignment);
         app_display_draw_text(text_view->string, text_view->pos_x + text_view->pos_offset_x + 1, text_view->pos_y + text_view->pos_offset_y + 1, CL_BLACK, text_view->alignment);
         app_display_draw_text(text_view->string, text_view->pos_x + text_view->pos_offset_x, text_view->pos_y + text_view->pos_offset_y, text_view->color, text_view->alignment);
         text_view->pos_last_drawn_x = text_view->pos_x + text_view->pos_offset_x;
@@ -258,6 +273,24 @@ void app_display_draw_bmp232(uint32_t x, uint32_t y, uint32_t w, uint32_t h, con
 {
     nrf_gfx_rect_t rect = {.x = x, .y = y, .width = w, .height = h};
     nrf_gfx_bmp565_draw(&m_led_matrix, &rect, img_buf);
+}
+
+void app_display_fade_to_black(uint32_t index)
+{
+    static uint32_t counter = 0;
+    static nrf_gfx_point_t point;
+    if(index == 0) counter = 0;
+    else if(counter <= (MATRIX_PIXEL_WIDTH*MATRIX_PIXEL_HEIGHT-index))
+    {
+        for(int i = 0; i < index; i++)
+        {
+            point.x = m_rnd_screen_fade_buffer[i + counter] % 64;
+            point.y = m_rnd_screen_fade_buffer[i + counter] / 64;
+            nrf_gfx_point_draw(&m_led_matrix, &point, CL_BLACK);
+        }
+        counter += index;
+    }
+
 }
 
 void app_display_clear_screen(void)

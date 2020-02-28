@@ -73,6 +73,8 @@ void app_display_draw_square(uint32_t x, uint32_t y, uint32_t w, uint32_t h, uin
 
 void app_display_draw_bmp232(uint32_t x, uint32_t y, uint32_t w, uint32_t h, const uint8_t *img_buf);
 
+void app_display_fade_to_black(uint32_t index);
+
 void app_display_clear_screen(void);
 
 #endif
