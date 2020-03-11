@@ -2,6 +2,7 @@
 #include "app_display.h"
 #include "math.h"
 #include "state_manager.h"
+#include "app_pong_image_manager.h"
 
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
@@ -546,6 +547,8 @@ uint32_t app_pong_init(pong_config_t *config)
 
     state_mngr_init(&m_gamestate_mngr, state_ops_map, sizeof(state_ops_map)/sizeof(state_ops_map[0]));
 
+    app_pong_image_init();
+
     app_display_text_view_add(&m_textview_get_ready);
     app_display_text_view_add(&m_textview_p1_name);
     app_display_text_view_add(&m_textview_p2_name);
@@ -615,6 +618,7 @@ uint32_t app_pong_forward_data_dump(uint8_t *dump, uint32_t dump_length)
 {
     static uint32_t counter = 0;
     static uint32_t index = 0;
+    static pong_image_info_t new_image_received;
     uint16_t pic_width, pic_height;
     if(dump_length == 0) 
     {
@@ -640,9 +644,14 @@ uint32_t app_pong_forward_data_dump(uint8_t *dump, uint32_t dump_length)
         {
             memcpy(m_background_pic + counter, dump, dump_length);
             counter += dump_length;
-            if(dump_length >= (PLAYER_PROFILE_PIC_SIZE*2))
+            if(counter >= (PLAYER_PROFILE_PIC_SIZE*2))
             {
-    
+                strcpy(new_image_received.img_name, "Test");
+                new_image_received.img_type = 1;
+                new_image_received.width = 64;
+                new_image_received.height = 32;
+                new_image_received.data_ptr = m_background_pic;
+                app_pong_image_store(&new_image_received);
             }
             
         }
