@@ -295,10 +295,15 @@ void gs_waiting_for_players(state_mngr_t * context, state_ops_return_t * return_
 {
     uint32_t blink_fast = (context->lifetime >> 3) % 2;
     uint32_t paddle1_color, paddle2_color;
+    static pong_image_info_t *welcome_image;
     switch(context->current_op)
     {
         case STATE_OP_ENTER:
             start_every_state(context->current_state, true);
+            app_pong_image_find_by_type(&welcome_image, IMG_TYPE_WELCOME);
+            app_display_fade_to_image(0, 0, welcome_image, 0);
+            app_display_draw_square(0, 0, 64, 32, CL_BLACK);
+            //app_display_draw_bmp232(0, 0, 64, 32, welcome_image->data_ptr);
             break;
 
         case STATE_OP_UPDATE:
@@ -310,14 +315,23 @@ void gs_waiting_for_players(state_mngr_t * context, state_ops_return_t * return_
             break;
 
         case STATE_OP_DRAW:
-            paddle1_color = (m_gamestate.player[0].connected_state == CONSTATE_DISCONNECTED) ? CL_RED : m_gamestate.player[0].color;
-            if(m_gamestate.player[0].connected_state != CONSTATE_ACTIVE && blink_fast) paddle1_color = CL_BLACK;
-            paddle2_color = (m_gamestate.player[1].connected_state == CONSTATE_DISCONNECTED) ? CL_RED : m_gamestate.player[1].color;
-            if(m_gamestate.player[1].connected_state != CONSTATE_ACTIVE && blink_fast) paddle2_color = CL_BLACK;
-            app_display_draw_paddles(16, 16, paddle1_color, paddle2_color, m_graphics_invalidate);
-            app_display_draw_text("Waiting", 32, 2, CL_BLUE, ALIGNMENT_CENTRE);
-            app_display_draw_text("for", 32, 11, CL_BLUE, ALIGNMENT_CENTRE);
-            app_display_draw_text("players", 32, 20, CL_BLUE, ALIGNMENT_CENTRE);
+            if(welcome_image != 0)
+            {
+                app_display_fade_to_image(0, 0, welcome_image, 64);
+
+                //app_display_draw_bmp232(0, 0, 64, 32, welcome_image->data_ptr);
+            }
+            else
+            {
+                paddle1_color = (m_gamestate.player[0].connected_state == CONSTATE_DISCONNECTED) ? CL_RED : m_gamestate.player[0].color;
+                if(m_gamestate.player[0].connected_state != CONSTATE_ACTIVE && blink_fast) paddle1_color = CL_BLACK;
+                paddle2_color = (m_gamestate.player[1].connected_state == CONSTATE_DISCONNECTED) ? CL_RED : m_gamestate.player[1].color;
+                if(m_gamestate.player[1].connected_state != CONSTATE_ACTIVE && blink_fast) paddle2_color = CL_BLACK;
+                app_display_draw_paddles(16, 16, paddle1_color, paddle2_color, m_graphics_invalidate);
+                app_display_draw_text("Waiting", 32, 2, CL_BLUE, ALIGNMENT_CENTRE);
+                app_display_draw_text("for", 32, 11, CL_BLUE, ALIGNMENT_CENTRE);
+                app_display_draw_text("players", 32, 20, CL_BLUE, ALIGNMENT_CENTRE);
+            }
             break;
 
         default:
@@ -508,13 +522,14 @@ void gs_point_scored(state_mngr_t * context, state_ops_return_t * return_data)
 
 void gs_score_limit_reached(state_mngr_t * context, state_ops_return_t * return_data)
 {
+    static pong_image_info_t *game_over_image;
     switch(context->current_op)
     {
         case STATE_OP_ENTER:
-            start_every_state(context->current_state, true);
-            //app_display_draw_text("GAME OVER", 32, 2, CL_YELLOW, ALIGNMENT_CENTRE);
+            start_every_state(context->current_state, false);
+            app_pong_image_find_by_type(&game_over_image, IMG_TYPE_GAME_OVER);
             //app_display_score_state(&m_gamestate);
-            app_display_draw_bmp232(0, 0, 64, 32, m_background_pic);
+            app_display_fade_to_image(0, 0, game_over_image, 0);
             break;
 
         case STATE_OP_UPDATE:
@@ -523,6 +538,10 @@ void gs_score_limit_reached(state_mngr_t * context, state_ops_return_t * return_
             {
                 return_data->go_to_state = STATE_GAME_START_NEW_GAME;
             }
+            break;
+            
+        case STATE_OP_DRAW:
+            if(game_over_image) app_display_fade_to_image(0, 0, game_over_image, 64);
             break;
 
         default:
@@ -553,6 +572,17 @@ uint32_t app_pong_init(pong_config_t *config)
     app_display_text_view_add(&m_textview_p1_name);
     app_display_text_view_add(&m_textview_p2_name);
     app_display_text_view_add(&m_textview_versus);
+
+    // Logging images stored in flash
+    pong_image_info_t *stored_image;
+    for(int index = 0; index < 100; index++)
+    {
+        if(app_pong_image_find_by_index(&stored_image, index) == 0)
+        {
+            NRF_LOG_INFO("%i - Img found, type %i, name %s", index, stored_image->img_type, stored_image->img_name);
+        }
+        else break;
+    }
 
     app_timer_create(&m_game_loop_timer_id, APP_TIMER_MODE_REPEATED, update_game_loop);
     reset_game();
@@ -618,6 +648,7 @@ uint32_t app_pong_forward_data_dump(uint8_t *dump, uint32_t dump_length)
 {
     static uint32_t counter = 0;
     static uint32_t index = 0;
+    static uint8_t  image_name[32];
     static pong_image_info_t new_image_received;
     uint16_t pic_width, pic_height;
     if(dump_length == 0) 
@@ -626,6 +657,12 @@ uint32_t app_pong_forward_data_dump(uint8_t *dump, uint32_t dump_length)
         index = dump[1];
         pic_width = dump[2] << 8 | dump[3];
         pic_height = dump[4] << 8 | dump[5];
+        for(int i = 0; i < 32; i++)
+        {
+            image_name[i] = dump[i + 6];
+            if(dump[i + 6] == 0) break;
+        }
+        image_name[31] = 0;
         NRF_LOG_INFO("Picture starting. W %i, H %i", (int)pic_width, (int)pic_height);
         counter = 0;
     }
@@ -640,14 +677,14 @@ uint32_t app_pong_forward_data_dump(uint8_t *dump, uint32_t dump_length)
                 m_gamestate.player[index].profile_pic_loaded = 1;
             }
         }
-        else if(index == 2)
+        else if(index >= 2)
         {
             memcpy(m_background_pic + counter, dump, dump_length);
             counter += dump_length;
             if(counter >= (PLAYER_PROFILE_PIC_SIZE*2))
             {
-                strcpy(new_image_received.img_name, "Test");
-                new_image_received.img_type = 1;
+                strcpy(new_image_received.img_name, image_name);
+                new_image_received.img_type = index;
                 new_image_received.width = 64;
                 new_image_received.height = 32;
                 new_image_received.data_ptr = m_background_pic;

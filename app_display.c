@@ -275,6 +275,15 @@ void app_display_draw_bmp232(uint32_t x, uint32_t y, uint32_t w, uint32_t h, con
     nrf_gfx_bmp565_draw(&m_led_matrix, &rect, img_buf);
 }
 
+void app_display_draw_image(uint32_t x, uint32_t y, pong_image_info_t *image)
+{
+    if(image != 0)
+    {
+        nrf_gfx_rect_t rect = {.x = x, .y = y, .width = image->width, .height = image->height};
+        nrf_gfx_bmp565_draw(&m_led_matrix, &rect, image->data_ptr);
+    }
+}
+
 void app_display_fade_to_black(uint32_t index)
 {
     static uint32_t counter = 0;
@@ -291,6 +300,29 @@ void app_display_fade_to_black(uint32_t index)
         counter += index;
     }
 
+}
+
+void app_display_fade_to_image(uint32_t x, uint32_t y, pong_image_info_t *image, uint32_t index)
+{
+    static uint32_t counter = 0;
+    static nrf_gfx_point_t point;
+    uint32_t pixel_color;
+    uint8_t current_pixel;
+    if(index == 0) counter = 0;
+    else if(counter <= (MATRIX_PIXEL_WIDTH*MATRIX_PIXEL_HEIGHT-index))
+    {
+        for(int i = 0; i < index; i++)
+        {
+            point.x = m_rnd_screen_fade_buffer[i + counter] % 64;
+            point.y = m_rnd_screen_fade_buffer[i + counter] / 64;
+            current_pixel = image->data_ptr[point.x + (image->height - 1 - point.y) * image->width];
+            pixel_color =  (current_pixel & 0x03) << (6 + 16);            
+            pixel_color |= (current_pixel & 0x0C) <<  (4 + 8);
+            pixel_color |= (current_pixel & 0x30) <<  (2 + 0);
+            nrf_gfx_point_draw(&m_led_matrix, &point, pixel_color);
+        }
+        counter += index;
+    }
 }
 
 void app_display_clear_screen(void)

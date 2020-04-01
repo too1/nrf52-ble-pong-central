@@ -66,6 +66,12 @@ typedef enum {STATE_INVALID,
               STATE_GAME_SCORE_LIMIT_REACHED,
       
              }pong_main_state_t;
+  
+typedef enum {IMG_TYPE_P1, 
+              IMG_TYPE_P2, 
+              IMG_TYPE_GAME_OVER, 
+              IMG_TYPE_WELCOME,
+              IMG_TYPE_IDLE}pong_image_type_t;
 
 typedef struct
 {

@@ -21,9 +21,11 @@ typedef struct
 
 uint32_t app_pong_image_init(void);
 
-uint32_t app_pong_image_find_by_name(pong_image_info_t *info, const char* name);
+uint32_t app_pong_image_find_by_name(pong_image_info_t **info, const char* name);
 
-uint32_t app_pong_image_find_by_type(pong_image_info_t *info, uint32_t type);
+uint32_t app_pong_image_find_by_type(pong_image_info_t **info, uint32_t type);
+
+uint32_t app_pong_image_find_by_index(pong_image_info_t **info, uint32_t index);
 
 uint32_t app_pong_image_store(pong_image_info_t *info);
 

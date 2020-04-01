@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include "drv_led_matrix.h"
 #include "app_pong.h"
+#include "app_pong_image_manager.h"
 
 #define CL_BLACK    0
 #define CL_BLUE     BLUE
@@ -73,7 +74,11 @@ void app_display_draw_square(uint32_t x, uint32_t y, uint32_t w, uint32_t h, uin
 
 void app_display_draw_bmp232(uint32_t x, uint32_t y, uint32_t w, uint32_t h, const uint8_t *img_buf);
 
+void app_display_draw_image(uint32_t x, uint32_t y, pong_image_info_t *image);
+
 void app_display_fade_to_black(uint32_t index);
+
+void app_display_fade_to_image(uint32_t x, uint32_t y, pong_image_info_t *image, uint32_t index);
 
 void app_display_clear_screen(void);
 
